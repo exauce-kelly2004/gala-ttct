@@ -44,3 +44,6 @@ next-env.d.ts
 # prisma client généré
 /src/generated/
 
+
+# référence visuelle d’un tiers (droits d’auteur) : conservée en local, non publiée
+/docs/Identidade visual Afro I Africa I Afrobeats.jpg

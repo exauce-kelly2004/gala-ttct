@@ -1,18 +1,135 @@
 @import "tailwindcss";
 
-/* Socle minimal — le design system complet (DESIGN.md) est construit à l'Étape 2. */
-:root {
-  --background: #06162d;
-  --foreground: #fff8e8;
+/* =========================================================================
+   Design system TTCT · Soirée de Gala 2026 · « Tradition contemporaine »
+   Référence : docs/DESIGN_TTCT_TRADITION.md
+   Choix validés : typographie A (Londrina Solid + Work Sans),
+   palette Crème + Brun + Orange, luminosité fortement réduite.
+   ========================================================================= */
+
+@theme {
+  /* Palette atténuée */
+  --color-brun: #2a0d08; /* fond dominant, équivalent du noir */
+  --color-brun-soft: #3a160e; /* surfaces élevées (billets, blocs) */
+  --color-terre: #5e2e16; /* motifs sur brun, filets, accents sur fond clair */
+  --color-rouille: #a9531f; /* orange décoratif (motifs, bandes) */
+  --color-orange: #c8722f; /* orange d'action : CTA, accents texte sur brun (5,1 : 1) */
+  --color-creme: #d8c09a; /* crème atténué : texte secondaire fort, fonds clairs */
+  --color-ivoire: #e6d3b3; /* texte principal sur brun (12,4 : 1) */
+  --color-sable: #a68a66; /* texte discret sur brun (5,6 : 1) */
+  --color-parchemin: #cdb48c; /* fond des sections claires (brun dessus : 9 : 1) */
+
+  /* États fonctionnels (statuts, scanner) : sourds, jamais seuls porteurs du sens */
+  --color-valide: #9aab68;
+  --color-alerte: #d0614a;
+
+  /* Typographie validée : option A */
+  --font-display: var(--font-londrina), "Londrina Solid", Impact, sans-serif;
+  --font-sans: var(--font-work-sans), "Work Sans", system-ui, sans-serif;
+
+  --ease-gala: cubic-bezier(0.22, 1, 0.36, 1);
+  --animate-rise: rise 0.9s var(--ease-gala) both;
+
+  @keyframes rise {
+    from {
+      opacity: 0;
+      transform: translateY(12px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
+/* --------------------------------------------------------------------- */
+/* Tons de surface : les composants lisent ces variables                  */
+/* --------------------------------------------------------------------- */
+
+@layer base {
+  :root,
+  [data-tone="dark"] {
+    --fg: var(--color-ivoire);
+    --fg-muted: var(--color-sable);
+    --accent: var(--color-orange);
+    --line: rgb(166 138 102 / 0.28);
+    --surface: var(--color-brun);
+  }
+
+  [data-tone="light"] {
+    --fg: var(--color-brun);
+    --fg-muted: var(--color-terre);
+    --accent: var(--color-terre);
+    --line: rgb(42 13 8 / 0.22);
+    --surface: var(--color-parchemin);
+  }
+
+  html {
+    color-scheme: dark;
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--color-brun);
+    color: var(--fg);
+    font-family: var(--font-sans);
+    font-size: 1rem;
+    line-height: 1.65;
+  }
+
+  ::selection {
+    background: var(--color-orange);
+    color: var(--color-brun);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html {
+      scroll-behavior: auto;
+    }
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+    }
+  }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: system-ui, sans-serif;
+/* --------------------------------------------------------------------- */
+/* Matière : grain très léger, pour éviter les aplats « numériques »      */
+/* --------------------------------------------------------------------- */
+
+@utility bg-grain {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .9 0 0 0 0 .8 0 0 0 0 .6 0 0 0 .07 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* --------------------------------------------------------------------- */
+/* Animation des bandes : se déroulent à l'entrée dans l'écran            */
+/* (CSS scroll-driven ; sans support, la bande est simplement visible)    */
+/* --------------------------------------------------------------------- */
+
+@keyframes band-unroll {
+  from {
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@utility band-reveal {
+  @supports (animation-timeline: view()) {
+    animation: band-unroll linear both;
+    animation-timeline: view();
+    animation-range: entry 10% cover 35%;
+  }
+  @media (prefers-reduced-motion: reduce) {
+    animation: none !important;
+  }
 }

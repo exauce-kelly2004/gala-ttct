@@ -1,15 +1,30 @@
 import type { Metadata } from "next";
+import { Londrina_Solid, Work_Sans } from "next/font/google";
 import "./globals.css";
 
-// Typographies (Cormorant Garamond, Great Vibes, Inter) : ajoutées à l'Étape 2 — design system.
+// Typographie validée (option A) : Londrina Solid pour les titres, Work Sans pour tout le reste.
+const londrina = Londrina_Solid({
+  variable: "--font-londrina",
+  subsets: ["latin"],
+  weight: ["300", "400", "900"],
+  display: "swap",
+});
+
+const workSans = Work_Sans({
+  variable: "--font-work-sans",
+  subsets: ["latin"],
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "Soirée de Gala TTCT 2026",
-  description: "Soirée de Gala — La Team Télé Contre Télé — 19 décembre 2026",
+  title: "Soirée de Gala TTCT 2026 · Billetterie",
+  description:
+    "Réservez votre pass pour la Soirée de Gala de La Team Télé Contre Télé, le 19 décembre 2026 : une soirée de métissage culturel au profit des veuves et des orphelins.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="fr" className="h-full antialiased">
+    <html lang="fr" className={`${londrina.variable} ${workSans.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
