@@ -1,0 +1,18 @@
+@import "tailwindcss";
+
+/* Socle minimal — le design system complet (DESIGN.md) est construit à l'Étape 2. */
+:root {
+  --background: #06162d;
+  --foreground: #fff8e8;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: system-ui, sans-serif;
+}

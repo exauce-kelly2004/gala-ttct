@@ -1,0 +1,23 @@
+# Base PostgreSQL de développement local.
+# En production, DATABASE_URL pointera vers une base hébergée (Neon, Supabase, Railway…).
+services:
+  db:
+    image: postgres:16-alpine
+    container_name: ttct-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ttct
+      POSTGRES_PASSWORD: ttct_dev_password
+      POSTGRES_DB: ttct_gala
+    ports:
+      - "5433:5432"
+    volumes:
+      - ttct-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ttct -d ttct_gala"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  ttct-pgdata:

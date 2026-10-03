@@ -1,0 +1,11 @@
+// Schéma Prisma — Gala TTCT 2026
+// Les modèles métier (User, Event, TicketType, Order, Ticket, ScanLog) sont ajoutés à l'Étape 5.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
