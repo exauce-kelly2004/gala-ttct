@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ComponentProps, ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
-type Variant = "primary" | "secondary" | "link";
+type Variant = "primary" | "dark" | "secondary" | "link";
 type Size = "md" | "lg";
 
 const base =
@@ -13,6 +13,8 @@ const base =
 const variants: Record<Variant, string> = {
   // L'action d'achat : orange atténué, texte brun (5,1 : 1), angles droits
   primary: "bg-orange text-brun hover:bg-ivoire hover:-translate-y-px active:translate-y-0",
+  // Action principale posée sur un aplat orange : inversée en brun
+  dark: "bg-brun text-ivoire hover:bg-ivoire hover:text-brun hover:-translate-y-px active:translate-y-0",
   // Action secondaire : filet, prend la couleur du ton de la section
   secondary: "border border-(--fg)/40 text-(--fg) hover:border-(--accent) hover:text-(--accent)",
   link: "text-(--accent) underline decoration-1 underline-offset-[6px] hover:decoration-2",

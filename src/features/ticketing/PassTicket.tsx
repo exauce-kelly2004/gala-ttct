@@ -1,27 +1,14 @@
+"use client";
+
+import { useState } from "react";
 import { LuArrowRight, LuCheck } from "react-icons/lu";
 import { Motif } from "@/components/motifs/Motif";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
+import type { PassAvailability, PassOffer } from "@/config/passes";
+import { cn } from "@/lib/cn";
 import { formatAmount } from "@/lib/format";
-
-export type PassAvailability = "available" | "low" | "soldout";
-
-export type PassTicketProps = {
-  /** Identifiant stable (sert aussi aux identifiants des motifs SVG). */
-  slug: string;
-  name: string;
-  /** Prix en unités entières. Viendra de la base de données (Étape back-end). */
-  price: number;
-  currency: string;
-  /** Nombre de personnes couvertes par un pass (Duo = 2). */
-  seats: number;
-  perks: string[];
-  availability: PassAvailability;
-  maxPerOrder: number;
-  /** Mention tant que le nom métier n'est pas confirmé par l'organisateur. */
-  nameToConfirm?: boolean;
-};
 
 const availabilityBadge: Record<PassAvailability, { tone: "neutre" | "orange" | "alerte"; label: string }> = {
   available: { tone: "neutre", label: "Disponible" },
@@ -29,14 +16,21 @@ const availabilityBadge: Record<PassAvailability, { tone: "neutre" | "orange" | 
   soldout: { tone: "alerte", label: "Complet" },
 };
 
-/** Pass présenté comme un billet : corps + talon détachable daté. */
-export function PassTicket({ slug, name, price, currency, seats, perks, availability, maxPerOrder, nameToConfirm }: PassTicketProps) {
+/** Pass présenté comme un billet : corps + talon détachable daté. La quantité choisie part avec la réservation. */
+export function PassTicket({ slug, name, price, currency, seats, perks, availability, maxPerOrder, nameToConfirm, featured }: PassOffer) {
+  const [quantity, setQuantity] = useState(1);
   const soldOut = availability === "soldout";
   const badge = availabilityBadge[availability];
 
   return (
-    <article data-tone="dark" className="group flex flex-col border border-terre bg-brun-soft text-(--fg) transition-transform duration-500 ease-gala hover:-translate-y-1">
-      <div className="h-5 bg-brun text-rouille">
+    <article
+      data-tone="dark"
+      className={cn(
+        "group flex h-full flex-col border bg-brun-soft text-(--fg) transition-transform duration-500 ease-gala hover:-translate-y-1",
+        featured ? "border-rouille" : "border-terre",
+      )}
+    >
+      <div className={cn("h-5", featured ? "bg-rouille text-brun/70" : "bg-brun text-rouille")}>
         <Motif name="losanges" id={`pass-${slug}-top`} scale={0.625} />
       </div>
 
@@ -68,12 +62,24 @@ export function PassTicket({ slug, name, price, currency, seats, perks, availabi
         <div className="mt-auto flex flex-col gap-4 pt-8">
           <div className="flex items-center justify-between gap-4">
             <span className="text-[0.68rem] font-semibold uppercase tracking-[0.18em] text-sable">Quantité</span>
-            <QuantityStepper label={`Quantité, ${name}`} max={maxPerOrder} disabled={soldOut} />
+            <QuantityStepper label={`Quantité, ${name}`} min={1} max={maxPerOrder} defaultValue={1} disabled={soldOut} onChange={setQuantity} />
           </div>
-          <Button className="w-full" disabled={soldOut}>
-            {soldOut ? "Complet" : "Réserver ce pass"}
-            {!soldOut && <LuArrowRight className="size-4" aria-hidden />}
-          </Button>
+          <p className="flex items-baseline justify-between text-sm text-sable" aria-live="polite">
+            <span>Total</span>
+            <span className="font-semibold text-ivoire tabular-nums">
+              {formatAmount(price * quantity)} {currency}
+            </span>
+          </p>
+          {soldOut ? (
+            <Button className="w-full" disabled>
+              Complet
+            </Button>
+          ) : (
+            <Button className="w-full" href={`/reserver?pass=${slug}&quantite=${quantity}`}>
+              Réserver ce pass
+              <LuArrowRight className="size-4" aria-hidden />
+            </Button>
+          )}
         </div>
       </div>
 

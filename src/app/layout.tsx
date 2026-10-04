@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Londrina_Solid, Work_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -20,6 +20,10 @@ export const metadata: Metadata = {
   title: "Soirée de Gala TTCT 2026 · Billetterie",
   description:
     "Réservez votre pass pour la Soirée de Gala de La Team Télé Contre Télé, le 19 décembre 2026 : une soirée de métissage culturel au profit des veuves et des orphelins.",
+};
+
+export const viewport: Viewport = {
+  themeColor: "#2a0d08",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

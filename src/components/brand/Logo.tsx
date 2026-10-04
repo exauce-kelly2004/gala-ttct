@@ -24,7 +24,7 @@ export function Logo({ variant = "emblem", width, priority, className }: LogoPro
       alt="TTCT, La Team Télé Contre Télé"
       width={width}
       height={Math.round((width * src.height) / src.width)}
-      priority={priority}
+      preload={priority}
       className={cn("h-auto select-none", className)}
     />
   );

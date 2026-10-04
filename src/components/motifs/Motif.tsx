@@ -94,13 +94,28 @@ export function Motif({ name, id, scale = 1, className, style }: MotifProps) {
   );
 }
 
-/** Rosace isolée (cercles concentriques), élément de composition à grande échelle. */
-export function Rosace({ rings = 4, className }: { rings?: number; className?: string }) {
+/**
+ * Rosace isolée (cercles concentriques), élément de composition à grande échelle.
+ * `draw` : les anneaux se tracent l'un après l'autre, comme au compas, au chargement (`true`)
+ * ou à l'entrée dans l'écran (`"view"`).
+ */
+export function Rosace({ rings = 4, draw, className, style }: { rings?: number; draw?: boolean | "view"; className?: string; style?: CSSProperties }) {
   const step = 88 / rings;
   return (
-    <svg aria-hidden focusable="false" viewBox="0 0 200 200" className={className}>
+    <svg aria-hidden focusable="false" viewBox="0 0 200 200" className={cn(draw === "view" ? "rosace-draw-view" : draw && "rosace-draw", className)} style={style}>
       {Array.from({ length: rings }, (_, i) => (
-        <circle key={i} cx="100" cy="100" r={96 - i * step} fill="none" stroke="currentColor" strokeWidth={step / 2.2} />
+        <circle
+          key={i}
+          cx="100"
+          cy="100"
+          r={96 - i * step}
+          fill="none"
+          stroke="currentColor"
+          strokeWidth={step / 2.2}
+          pathLength={1}
+          style={{ "--ring": i } as CSSProperties}
+          transform="rotate(-90 100 100)"
+        />
       ))}
       <circle cx="100" cy="100" r={step / 2} fill="currentColor" />
     </svg>

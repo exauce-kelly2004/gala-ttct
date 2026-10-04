@@ -67,6 +67,10 @@
   html {
     color-scheme: dark;
     scroll-behavior: smooth;
+    /* Les ancres ne passent pas sous la navigation fixe */
+    scroll-padding-top: 5.5rem;
+    /* Permet d'animer jusqu'à « auto » (ouverture de la FAQ) */
+    interpolate-size: allow-keywords;
   }
 
   body {
@@ -131,5 +135,265 @@
   }
   @media (prefers-reduced-motion: reduce) {
     animation: none !important;
+  }
+}
+
+/* =========================================================================
+   Animations issues des motifs (Étape 3)
+   Toutes jouent une seule fois (chargement ou entrée dans l'écran) et
+   disparaissent avec prefers-reduced-motion.
+   ========================================================================= */
+
+/* Rosace : chaque anneau se trace comme au compas (cercles en pathLength="1") */
+@keyframes trace {
+  from {
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@utility rosace-draw {
+  & circle[stroke] {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+    animation: trace 1.8s var(--ease-gala) both;
+    animation-delay: calc(var(--ring, 0) * 130ms + var(--draw-delay, 0ms));
+  }
+  & circle:not([stroke]) {
+    animation: fade-in 0.6s ease both;
+    animation-delay: calc(var(--draw-delay, 0ms) + 900ms);
+  }
+}
+
+/* Lés de tissu : chaque bande se déroule de haut en bas, l'une après l'autre */
+@keyframes strip-unroll {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@utility strip-reveal {
+  animation: strip-unroll 1.2s var(--ease-gala) both;
+  animation-delay: calc(var(--strip, 0) * 160ms + var(--strip-delay, 300ms));
+}
+
+/* Extrémités en zigzag du bandeau thème : elles s'ouvrent depuis le centre */
+@keyframes side-open {
+  from {
+    transform: scaleX(0);
+  }
+}
+
+@utility side-reveal {
+  animation: side-open 0.9s var(--ease-gala) both;
+  animation-delay: var(--side-delay, 600ms);
+}
+
+/* Ouverture en losange : une image apparaît par un losange qui s'agrandit */
+@keyframes losange-open {
+  from {
+    clip-path: polygon(50% 38%, 62% 50%, 50% 62%, 38% 50%);
+  }
+  to {
+    clip-path: polygon(50% -50%, 150% 50%, 50% 150%, -50% 50%);
+  }
+}
+
+@utility losange-reveal {
+  @supports (animation-timeline: view()) {
+    animation: losange-open linear both;
+    animation-timeline: view();
+    animation-range: entry 0% entry 90%;
+  }
+}
+
+/* Texture qui glisse de quelques pixels au défilement (parallaxe discrète) */
+@keyframes drift {
+  from {
+    transform: translate3d(0, -5%, 0);
+  }
+  to {
+    transform: translate3d(0, 5%, 0);
+  }
+}
+
+@utility drift-scroll {
+  @supports (animation-timeline: view()) {
+    animation: drift linear both;
+    animation-timeline: view();
+  }
+}
+
+/* Contenu qui monte doucement à l'entrée dans l'écran */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+}
+
+@utility rise-on-view {
+  @supports (animation-timeline: view()) {
+    animation: rise-in linear both;
+    animation-timeline: view();
+    animation-range: entry 5% cover 25%;
+  }
+}
+
+/* Lien : un liseré en zigzag se tisse sous le texte au survol */
+@utility link-zigzag {
+  position: relative;
+  &::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -7px;
+    height: 5px;
+    width: 100%;
+    background-color: currentColor;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='5'%3E%3Cpath d='M0 4.2 2.5 1 5 4.2 7.5 1 10 4.2' fill='none' stroke='black' stroke-width='1.4'/%3E%3C/svg%3E") repeat-x left center / 10px 5px;
+    clip-path: inset(0 100% 0 0);
+    transition: clip-path 0.45s var(--ease-gala);
+  }
+  &:hover::after,
+  &:focus-visible::after,
+  &[aria-current="true"]::after {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* Panneau du menu mobile : se déroule comme une étoffe depuis le haut */
+@keyframes cloth-down {
+  from {
+    clip-path: inset(0 0 100% 0);
+  }
+  to {
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+@utility menu-unroll {
+  animation: cloth-down 0.55s var(--ease-gala) both;
+}
+
+/* Bichromie brun / orange pour les photos très colorées (kente) */
+@utility duotone {
+  position: relative;
+  isolation: isolate;
+  & img {
+    filter: grayscale(1) contrast(1.15) brightness(1.05);
+  }
+  &::before,
+  &::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 1;
+  }
+  &::before {
+    background: var(--color-rouille);
+    mix-blend-mode: multiply;
+  }
+  &::after {
+    background: var(--color-brun);
+    mix-blend-mode: lighten;
+  }
+}
+
+/* Rosace qui se trace quand elle entre dans l'écran (variante de rosace-draw) */
+@utility rosace-draw-view {
+  @supports (animation-timeline: view()) {
+    view-timeline: --rosace block;
+    & circle[stroke] {
+      stroke-dasharray: 1;
+      animation: trace linear both;
+      animation-timeline: --rosace;
+      animation-range: entry calc(var(--ring, 0) * 8%) cover calc(35% + var(--ring, 0) * 6%);
+    }
+  }
+}
+
+/* Fil du programme : se dessine de haut en bas au fil du défilement */
+@keyframes thread-draw {
+  from {
+    transform: scaleY(0);
+  }
+}
+
+@utility thread-reveal {
+  transform-origin: top;
+  @supports (animation-timeline: view()) {
+    animation: thread-draw linear both;
+    animation-timeline: view();
+    animation-range: entry 20% cover 60%;
+  }
+}
+
+/* Bords en zigzag (dents de 24 px de large, 12 px de haut) : haut, bas ou les deux */
+@utility edge-zigzag-top {
+  mask:
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / 24px 12px repeat-x,
+    linear-gradient(#000 0 0) bottom / 100% calc(100% - 11px) no-repeat;
+}
+
+@utility edge-zigzag-bottom {
+  mask:
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 24px 12px repeat-x,
+    linear-gradient(#000 0 0) top / 100% calc(100% - 11px) no-repeat;
+}
+
+@utility edge-zigzag-y {
+  mask:
+    conic-gradient(from 135deg at top, #0000, #000 1deg 89deg, #0000 90deg) top / 24px 12px repeat-x,
+    conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) bottom / 24px 12px repeat-x,
+    linear-gradient(#000 0 0) center / 100% calc(100% - 22px) no-repeat;
+}
+
+/* FAQ : ouverture animée (navigateurs récents), losange qui pivote en croix */
+@utility faq-item {
+  &::details-content {
+    block-size: 0;
+    overflow: hidden;
+    transition:
+      block-size 0.45s var(--ease-gala),
+      content-visibility 0.45s allow-discrete;
+  }
+  &[open]::details-content {
+    block-size: auto;
+  }
+  & summary::-webkit-details-marker {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .losange-reveal,
+  .drift-scroll,
+  .rise-on-view,
+  .strip-reveal,
+  .side-reveal,
+  .menu-unroll,
+  .thread-reveal {
+    animation: none !important;
+  }
+  .rosace-draw-view circle {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
+  }
+  .rosace-draw circle {
+    animation: none !important;
+    stroke-dashoffset: 0 !important;
   }
 }

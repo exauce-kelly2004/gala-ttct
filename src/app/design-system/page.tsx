@@ -12,7 +12,8 @@ import { Figure } from "@/components/ui/Figure";
 import { Container, Section } from "@/components/ui/Layout";
 import { PhotoFrame } from "@/components/ui/PhotoFrame";
 import { Accent, Eyebrow, Heading, Lead } from "@/components/ui/Typography";
-import { PassTicket, type PassTicketProps } from "@/features/ticketing/PassTicket";
+import { passes } from "@/config/passes";
+import { PassTicket } from "@/features/ticketing/PassTicket";
 
 export const metadata: Metadata = {
   title: "Design system · Gala TTCT",
@@ -50,13 +51,6 @@ const infos: [IconType, string][] = [
   [LuMapPin, "Lieu à confirmer"],
   [LuShirt, "Tenue : à confirmer"],
   [LuTicket, "Billet numérique avec QR code"],
-];
-
-// Exemples : prix de l'affiche ; noms, avantages et disponibilités à confirmer.
-const demoPasses: PassTicketProps[] = [
-  { slug: "duo-vvip", name: "Pass Duo V.V.I.P", price: 50000, currency: "FCFA", seats: 2, perks: ["Accès à la Soirée de Gala", "Avantages à confirmer"], availability: "available", maxPerOrder: 5, nameToConfirm: true },
-  { slug: "duo-vip", name: "Pass Duo V.I.P", price: 25000, currency: "FCFA", seats: 2, perks: ["Accès à la Soirée de Gala", "Avantages à confirmer"], availability: "low", maxPerOrder: 5 },
-  { slug: "solo", name: "Pass Solo", price: 15000, currency: "FCFA", seats: 1, perks: ["Accès à la Soirée de Gala", "Avantages à confirmer"], availability: "available", maxPerOrder: 10 },
 ];
 
 function SpecHeader({ index, title, children }: { index: string; title: string; children?: ReactNode }) {
@@ -246,7 +240,7 @@ export default function DesignSystemPage() {
             Prix de l’affiche. Noms, avantages et disponibilités à confirmer : ils viendront des données validées.
           </SpecHeader>
           <div className="mx-auto grid max-w-md gap-8 lg:max-w-none lg:grid-cols-3 lg:gap-6">
-            {demoPasses.map((p) => (
+            {passes.map((p) => (
               <PassTicket key={p.slug} {...p} />
             ))}
           </div>
