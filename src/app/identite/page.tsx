@@ -13,6 +13,7 @@ import { PassTicket } from "@/features/ticketing/PassTicket";
 import { ETicket } from "@/features/ticketing/ETicket";
 import { formatPhone } from "@/lib/format";
 import beninPluriel from "../../../public/illustrations/benin-pluriel.webp";
+import affiche from "../../../docs/affiche/affiche-gala-ttct-2026-benin-pluriel.jpg";
 import qrSpecimen from "./qr-specimen.svg";
 
 export const metadata: Metadata = { title: "Identité visuelle · Gala TTCT", robots: { index: false } };
@@ -223,6 +224,28 @@ export default function IdentitePage() {
                 <p className="mt-8 inline-block border border-orange/60 px-4 py-2 text-[12px] font-semibold uppercase tracking-[0.18em] text-orange">
                   Spécimen : QR code de démonstration
                 </p>
+              </div>
+            </div>
+          </Block>
+        </div>
+
+        {/* Affiche */}
+        <div className="px-20 pb-20">
+          <Block index="07 · Affiche" title="Le Bénin pluriel à l’affiche">
+            <div className="grid grid-cols-12 items-center gap-12">
+              <div className="col-span-6 flex justify-center bg-brun-soft py-12">
+                <Image src={affiche} alt="" className="h-[960px] w-auto shadow-[0_30px_60px_rgba(10,2,1,0.6)]" />
+              </div>
+              <div className="col-span-6">
+                <p className="max-w-xl text-[19px] leading-relaxed text-ivoire/90">
+                  Format portrait 2:3, exporté en 2160 × 3240 px pour l’impression et le partage. Toutes les informations de l’affiche d’origine sont conservées (pass et prix,
+                  contacts, lieu, code vestimentaire), l’horaire de 20h est ajouté, et la carte du Bénin pluriel devient la pièce maîtresse : sans bordure, auréolée de lumière, traversée par les anneaux du soleil et fondue dans le décor jusqu’aux pass.
+                </p>
+                <ul className="mt-8 space-y-3 text-[16px] text-sable">
+                  <li>· docs/affiche/affiche-gala-ttct-2026-benin-pluriel.png (impression)</li>
+                  <li>· docs/affiche/affiche-gala-ttct-2026-benin-pluriel.jpg (réseaux sociaux, WhatsApp)</li>
+                  <li>· docs/affiche/affiche-gala-ttct-2026-benin-pluriel.pdf (imprimeur)</li>
+                </ul>
               </div>
             </div>
           </Block>
