@@ -40,7 +40,7 @@ export function SiteHeader() {
   const solid = scrolled || open;
 
   return (
-    <header data-tone="dark" className="fixed inset-x-0 top-0 z-50 text-(--fg)">
+    <header data-tone="dark" className="fixed inset-x-0 top-0 z-50 text-(--fg) print:hidden">
       <div className={cn("transition-colors duration-500 ease-gala", solid ? "bg-brun" : "bg-transparent")}>
         <div className="mx-auto flex h-16 w-full max-w-7xl items-center justify-between gap-6 px-5 sm:h-20 sm:px-8">
           <Link href="/" onClick={close} className="flex items-center gap-3" aria-label="Accueil, Soirée de Gala TTCT">

@@ -8,17 +8,20 @@ type QuantityStepperProps = {
   min?: number;
   max: number;
   defaultValue?: number;
+  /** Mode contrôlé : la valeur vient du parent (panier du checkout). */
+  value?: number;
   disabled?: boolean;
   onChange?: (value: number) => void;
 };
 
 /** Sélecteur de quantité : boutons tactiles de 44 px, valeur annoncée aux lecteurs d'écran. */
-export function QuantityStepper({ label, min = 0, max, defaultValue = min, disabled, onChange }: QuantityStepperProps) {
-  const [value, setValue] = useState(defaultValue);
+export function QuantityStepper({ label, min = 0, max, defaultValue = min, value: controlled, disabled, onChange }: QuantityStepperProps) {
+  const [internal, setInternal] = useState(defaultValue);
+  const value = controlled ?? internal;
 
   const update = (next: number) => {
     const clamped = Math.min(max, Math.max(min, next));
-    setValue(clamped);
+    setInternal(clamped);
     onChange?.(clamped);
   };
 

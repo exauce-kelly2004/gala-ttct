@@ -23,7 +23,7 @@ function Column({ title, children }: { title: string; children: ReactNode }) {
 
 export function SiteFooter() {
   return (
-    <footer data-tone="dark" className="bg-brun bg-grain text-(--fg)">
+    <footer data-tone="dark" className="bg-brun bg-grain text-(--fg) print:hidden">
       <MotifBand id="footer-band" />
       <div className="mx-auto w-full max-w-7xl px-5 pb-10 pt-16 sm:px-8 lg:pt-20">
         <div className="grid gap-12 sm:grid-cols-2 lg:grid-cols-12">
