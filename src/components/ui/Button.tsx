@@ -8,7 +8,9 @@ type Size = "md" | "lg";
 const base =
   "inline-flex items-center justify-center gap-2.5 font-sans font-semibold uppercase tracking-[0.16em] " +
   "transition-[transform,background-color,border-color,color] duration-300 ease-gala " +
-  "disabled:pointer-events-none disabled:opacity-45 aria-disabled:pointer-events-none aria-disabled:opacity-45";
+  "disabled:pointer-events-none disabled:opacity-45 aria-disabled:pointer-events-none aria-disabled:opacity-45 " +
+  // La flèche finale avance au survol
+  "[&>svg:last-child:not(:first-child)]:transition-transform [&>svg:last-child:not(:first-child)]:duration-300 hover:[&>svg:last-child:not(:first-child)]:translate-x-1";
 
 const variants: Record<Variant, string> = {
   // L'action d'achat : orange atténué, texte brun (5,1 : 1), angles droits

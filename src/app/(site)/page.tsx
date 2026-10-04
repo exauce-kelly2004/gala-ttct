@@ -1,6 +1,7 @@
 import { Faq } from "@/features/home/Faq";
 import { FinalCta } from "@/features/home/FinalCta";
 import { Hero } from "@/features/home/Hero";
+import { InfoMarquee } from "@/features/home/InfoMarquee";
 import { Infos } from "@/features/home/Infos";
 import { Intro } from "@/features/home/Intro";
 import { Passes } from "@/features/home/Passes";
@@ -11,6 +12,7 @@ export default function Home() {
     <>
       <Hero />
       <Intro />
+      <InfoMarquee />
       <Programme />
       <Passes />
       <Infos />

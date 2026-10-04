@@ -25,6 +25,8 @@ Les types partagés sont dans [`src/features/checkout/order.ts`](../src/features
 type CreateOrderRequest = {
   buyer: { firstName: string; lastName: string; email: string; phone: string };
   items: { passSlug: string; quantity: number }[]; // passSlug : "duo-vvip" | "duo-vip" | "solo"
+  termsAcceptedAt: string; // ISO 8601 : moment où l'acheteur a coché « J'accepte les CGV »
+  termsVersion: string;    // version des CGV acceptées (date de mise à jour)
 };
 ```
 
@@ -77,7 +79,21 @@ type Ticket = {
 - `/confirmation?ref=...` ne doit pas exposer une commande à n'importe qui. Prévoyez une référence non devinable ou un jeton signé dans l'URL.
 - Le QR code ne contient qu'un jeton, aucune donnée personnelle.
 
-## 5. Données encore en dur côté front
+## 5. Obligations légales côté back-end (Bénin)
+
+Les pages `/conditions-generales-de-vente` et `/confidentialite` promettent ce qui suit. Le back-end doit le tenir :
+
+- **Accusé de réception** (Code du numérique, art. 344) : l'e-mail de confirmation contient le récapitulatif détaillé de la commande, sa **date et son heure**, et le justificatif de paiement.
+- **Preuve du consentement** (art. 341) : enregistrer `termsAcceptedAt` et `termsVersion` avec la commande.
+- **Archivage** (art. 346) : conserver commandes et billets pendant 10 ans.
+- **Rétractation** (art. 348 à 353) : il faut pouvoir annuler les billets d'une commande et la rembourser sous 30 jours ouvrables, par le même moyen de paiement.
+- **Données bancaires** : ne jamais les stocker. Seule la référence de paiement est conservée.
+- **Sécurité et violations** (art. 426 et 427) : notifier sans délai l'APDP et les personnes concernées en cas de violation.
+- **Droits des personnes** (art. 437 à 441) : pouvoir exporter, rectifier ou supprimer les données d'un acheteur (réponse sous 45 jours).
+- **Transferts hors du Bénin** (art. 391 et 392) : si la base est hébergée hors du Bénin (Neon, par exemple), renseigner le pays dans `src/config/legal.ts` (`databaseHost`).
+- **Déclaration APDP** (art. 405) : à faire par l'organisateur avant la mise en ligne. Le numéro de récépissé va dans `src/config/legal.ts`.
+
+## 6. Données encore en dur côté front
 
 Ces données sont provisoires, en attendant la base :
 

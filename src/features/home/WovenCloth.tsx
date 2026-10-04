@@ -59,7 +59,11 @@ export function WovenCloth({ id, className }: { id: string; className?: string }
   return (
     <div aria-hidden className={cn("relative flex gap-1.5 sm:gap-2", className)}>
       {strips.map((blocks, i) => (
-        <div key={i} className={cn("relative min-h-0 flex-1", i % 2 === 1 ? "lg:mt-12" : "lg:mb-12")} style={{ "--strip": i } as CSSProperties}>
+        <div
+          key={i}
+          className={cn("weave-scroll relative min-h-0 flex-1", i % 2 === 1 ? "lg:mt-12" : "lg:mb-12")}
+          style={{ "--strip": i, "--weave": `${(i % 2 === 1 ? -1 : 1) * (28 + i * 6)}px` } as CSSProperties}
+        >
           {i > 0 && (
             <span className="absolute left-[-9px] top-1/3 z-10 size-3 rotate-45 border-2 border-brun bg-orange animate-rise [animation-delay:calc(var(--strip)*160ms+1000ms)] sm:left-[-10px]" />
           )}

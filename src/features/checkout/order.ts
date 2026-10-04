@@ -11,6 +11,10 @@ export type Buyer = { firstName: string; lastName: string; email: string; phone:
 export type CreateOrderRequest = {
   buyer: Buyer;
   items: { passSlug: string; quantity: number }[];
+  /** Preuve du consentement aux CGV (la charge de la preuve incombe au vendeur, Code du numérique art. 341). */
+  termsAcceptedAt: string;
+  /** Version des CGV acceptées (date de mise à jour affichée sur la page). */
+  termsVersion: string;
 };
 
 export type OrderStatus = "PENDING" | "PAID" | "CANCELLED";

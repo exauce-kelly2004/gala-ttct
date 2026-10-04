@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { LuArrowRight, LuMapPin, LuShirt } from "react-icons/lu";
 import { Logo } from "@/components/brand/Logo";
 import { Motif, MotifBand, Rosace } from "@/components/motifs/Motif";
@@ -45,8 +46,12 @@ export function Hero() {
               <span className="font-display text-[clamp(1.9rem,7vw,3.2rem)] font-light uppercase leading-none tracking-[0.1em] text-creme animate-rise [animation-delay:240ms]">
                 Soirée de
               </span>
-              <span className="-mt-1 font-display text-[clamp(7rem,34vw,13.5rem)] font-black uppercase leading-[0.8] tracking-[0.01em] animate-rise [animation-delay:340ms]">
-                Gala
+              <span className="-mt-1 flex overflow-hidden pb-[0.04em] font-display text-[clamp(7rem,34vw,13.5rem)] font-black uppercase leading-[0.8] tracking-[0.01em]">
+                {"Gala".split("").map((letter, i) => (
+                  <span key={i} className="letter-reveal" style={{ "--letter": i } as CSSProperties}>
+                    {letter}
+                  </span>
+                ))}
               </span>
             </h1>
 

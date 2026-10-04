@@ -5,6 +5,7 @@ import { LuArrowRight, LuCheck } from "react-icons/lu";
 import { Motif } from "@/components/motifs/Motif";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { CountUp } from "@/components/ui/CountUp";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import type { PassAvailability, PassOffer } from "@/config/passes";
 import { cn } from "@/lib/cn";
@@ -30,8 +31,11 @@ export function PassTicket({ slug, name, price, currency, seats, perks, availabi
         featured ? "border-rouille" : "border-terre",
       )}
     >
-      <div className={cn("h-5", featured ? "bg-rouille text-brun/70" : "bg-brun text-rouille")}>
-        <Motif name="losanges" id={`pass-${slug}-top`} scale={0.625} />
+      {/* Bande de losanges : glisse au survol du billet */}
+      <div className={cn("h-5 overflow-hidden", featured ? "bg-rouille text-brun/70" : "bg-brun text-rouille")}>
+        <div className="h-full w-[calc(100%+40px)] transition-transform duration-[1.4s] ease-gala group-hover:-translate-x-10">
+          <Motif name="losanges" id={`pass-${slug}-top`} scale={0.625} />
+        </div>
       </div>
 
       <div className="flex flex-1 flex-col p-6 sm:p-7">
@@ -45,7 +49,7 @@ export function PassTicket({ slug, name, price, currency, seats, perks, availabi
         <h3 className="mt-5 font-display text-[2.3rem] font-black uppercase leading-[0.95]">{name}</h3>
 
         <p className="mt-5 flex items-baseline gap-2">
-          <span className="font-display text-[3.6rem] font-black leading-none tabular-nums text-orange">{formatAmount(price)}</span>
+          <CountUp value={price} className="font-display text-[3.6rem] font-black leading-none tabular-nums text-orange" />
           <span className="text-xs font-semibold uppercase tracking-[0.18em] text-sable">{currency}</span>
         </p>
 

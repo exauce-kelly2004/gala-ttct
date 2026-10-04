@@ -35,7 +35,11 @@ export function Countdown({ target }: { target: string }) {
         <div key={label} className="flex items-start gap-2.5 sm:gap-6">
           {i > 0 && <Rosace rings={2} className="mt-4 size-3 shrink-0 text-orange sm:mt-7 sm:size-3.5" />}
           <div className="flex min-w-14 flex-col items-center text-center sm:min-w-20">
-            <span className={`font-display text-[clamp(2.6rem,11vw,4.75rem)] font-black leading-none tabular-nums ${i === 3 ? "text-creme" : ""}`}>{value}</span>
+            <span className={`font-display text-[clamp(2.6rem,11vw,4.75rem)] font-black leading-none tabular-nums ${i === 3 ? "text-creme" : ""}`}>
+              <span key={value} className={value === "--" ? undefined : "tick-in"}>
+                {value}
+              </span>
+            </span>
             <span className="mt-2 text-[0.6rem] font-semibold uppercase tracking-[0.16em] text-(--fg-muted) sm:text-[0.64rem] sm:tracking-[0.26em]">{label}</span>
           </div>
         </div>

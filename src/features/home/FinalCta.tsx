@@ -11,8 +11,10 @@ export function FinalCta() {
   return (
     <section aria-labelledby="cta-title" className="relative bg-brun-soft">
       <div data-tone="light" className="edge-zigzag-y relative overflow-hidden bg-orange py-24 text-brun sm:py-28">
-        <div aria-hidden className="drift-scroll absolute -inset-y-10 inset-x-0 text-brun/[0.08]">
-          <Motif name="losanges" id="cta-bg" scale={2.2} />
+        <div aria-hidden className="absolute inset-0 overflow-hidden text-brun/[0.08]">
+          <div className="pattern-flow absolute inset-y-0 left-0 w-[calc(100%+96px)]">
+            <Motif name="losanges" id="cta-bg" scale={3} />
+          </div>
         </div>
         <Container className="relative flex flex-col items-center text-center">
           <p className="text-[0.72rem] font-semibold uppercase tracking-[0.3em] rise-on-view">

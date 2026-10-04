@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { LuArrowLeft, LuArrowRight, LuLock, LuPencil, LuShieldCheck } from "react-icons/lu";
@@ -9,6 +10,7 @@ import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
 import { QuantityStepper } from "@/components/ui/QuantityStepper";
 import { event } from "@/config/event";
+import { legal } from "@/config/legal";
 import { passes } from "@/config/passes";
 import { cn } from "@/lib/cn";
 import { formatAmount } from "@/lib/format";
@@ -81,6 +83,8 @@ export function CheckoutFlow({ initialCart }: { initialCart: Cart }) {
   const [cartError, setCartError] = useState<string | null>(null);
   const [paying, setPaying] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
+  const [accepted, setAccepted] = useState(false);
+  const [acceptError, setAcceptError] = useState(false);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
 
@@ -129,6 +133,8 @@ export function CheckoutFlow({ initialCart }: { initialCart: Cart }) {
       const { reference, paymentUrl } = await createOrder({
         buyer: data,
         items: lines.map((l) => ({ passSlug: l.slug, quantity: l.quantity })),
+        termsAcceptedAt: new Date().toISOString(),
+        termsVersion: legal.updatedAt,
       });
       // Prestataire avec page de paiement hébergée : on y redirige ; sinon, confirmation directe
       if (paymentUrl) window.location.assign(paymentUrl);
@@ -151,6 +157,12 @@ export function CheckoutFlow({ initialCart }: { initialCart: Cart }) {
       if (validateBuyer()) setStep(3);
     } else {
       const data = validateBuyer();
+      // Acceptation des CGV obligatoire avant paiement (Code du numérique, art. 338 et 343)
+      if (data && !accepted) {
+        setAcceptError(true);
+        document.getElementById("accept-cgv")?.focus();
+        return;
+      }
       if (data)
         void pay({
           firstName: data.firstName,
@@ -318,6 +330,15 @@ export function CheckoutFlow({ initialCart }: { initialCart: Cart }) {
                   className="sm:col-span-2"
                 />
               </div>
+              {/* Information à la collecte (Code du numérique, art. 415) */}
+              <p className="mt-6 text-sm leading-relaxed text-sable">
+                Vos données servent uniquement à traiter votre commande, à vous envoyer vos billets et à contrôler l’accès au gala. Elles ne sont ni vendues ni utilisées pour de la
+                prospection. Pour en savoir plus et exercer vos droits, consultez notre{" "}
+                <Link href="/confidentialite" target="_blank" className="text-orange underline underline-offset-4">
+                  politique de confidentialité
+                </Link>
+                .
+              </p>
             </section>
           )}
 
@@ -343,6 +364,39 @@ export function CheckoutFlow({ initialCart }: { initialCart: Cart }) {
                     Modifier
                   </button>
                 </div>
+              </div>
+
+              <div className="mt-6">
+                <label htmlFor="accept-cgv" className="flex cursor-pointer items-start gap-3 text-[0.95rem]">
+                  <input
+                    id="accept-cgv"
+                    type="checkbox"
+                    checked={accepted}
+                    onChange={(e) => {
+                      setAccepted(e.target.checked);
+                      setAcceptError(false);
+                    }}
+                    aria-invalid={acceptError || undefined}
+                    aria-describedby={acceptError ? "accept-cgv-error" : undefined}
+                    className="mt-0.5 size-5 shrink-0 accent-(--color-orange)"
+                  />
+                  <span className="text-(--fg)/85">
+                    J’ai lu et j’accepte les{" "}
+                    <Link href="/conditions-generales-de-vente" target="_blank" className="text-orange underline underline-offset-4">
+                      conditions générales de vente
+                    </Link>{" "}
+                    et la{" "}
+                    <Link href="/confidentialite" target="_blank" className="text-orange underline underline-offset-4">
+                      politique de confidentialité
+                    </Link>
+                    .
+                  </span>
+                </label>
+                {acceptError && (
+                  <p id="accept-cgv-error" role="alert" className="mt-2 text-sm font-medium text-alerte">
+                    Acceptez les conditions générales de vente pour finaliser votre réservation.
+                  </p>
+                )}
               </div>
 
               {payError && (

@@ -91,6 +91,11 @@ export function SiteHeader() {
         <Motif name="losanges" id="nav-band" scale={0.3125} />
       </div>
 
+      {/* Fil de lecture : se tisse au fil du défilement */}
+      <div aria-hidden className="absolute inset-x-0 top-full h-[3px]">
+        <div className="scroll-progress h-full bg-orange" />
+      </div>
+
       {open && (
         <div id="menu-mobile" className="menu-unroll fixed inset-x-0 bottom-0 top-[4.625rem] overflow-y-auto bg-brun bg-grain sm:top-[5.625rem] lg:hidden">
           <nav aria-label="Navigation mobile" className="flex min-h-full flex-col px-5 pb-10 pt-8 sm:px-8">

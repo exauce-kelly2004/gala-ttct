@@ -378,6 +378,148 @@
   }
 }
 
+/* Texte juridique : lisible, aéré, puces en losange */
+@utility legal-prose {
+  color: var(--fg);
+  & p,
+  & ul,
+  & ol {
+    margin-top: 1rem;
+    max-width: 70ch;
+    line-height: 1.75;
+  }
+  & h3 {
+    margin-top: 1.75rem;
+    font-weight: 600;
+    font-size: 0.78rem;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--color-rouille);
+  }
+  & ul > li {
+    position: relative;
+    padding-left: 1.4rem;
+    margin-top: 0.5rem;
+  }
+  & ul > li::before {
+    content: "";
+    position: absolute;
+    left: 0.2rem;
+    top: 0.68em;
+    width: 0.42rem;
+    height: 0.42rem;
+    rotate: 45deg;
+    background: var(--color-rouille);
+  }
+  & a {
+    color: var(--color-rouille);
+    text-decoration: underline;
+    text-underline-offset: 4px;
+  }
+  & strong {
+    font-weight: 600;
+  }
+}
+
+/* =========================================================================
+   Animations : vie du site (finitions)
+   ========================================================================= */
+
+/* Fil de lecture : se tisse sous la navigation au fil du défilement de la page */
+@keyframes progress-grow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@utility scroll-progress {
+  transform-origin: left;
+  transform: scaleX(0);
+  @supports (animation-timeline: scroll()) {
+    animation: progress-grow linear both;
+    animation-timeline: scroll(root block);
+  }
+}
+
+/* Lettres taillées : chaque lettre monte depuis une fente */
+@keyframes letter-up {
+  from {
+    transform: translateY(105%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+@utility letter-reveal {
+  display: inline-block;
+  animation: letter-up 0.9s var(--ease-gala) both;
+  animation-delay: calc(var(--letter, 0) * 90ms + var(--letter-delay, 340ms));
+}
+
+/* Étoffe du hero : les lés glissent en sens opposés au défilement (tissage) */
+@keyframes weave {
+  from {
+    translate: 0 0;
+  }
+  to {
+    translate: 0 var(--weave, 40px);
+  }
+}
+
+@utility weave-scroll {
+  @supports (animation-timeline: scroll()) {
+    animation: weave linear both;
+    animation-timeline: scroll(root block);
+    animation-range: 0 100vh;
+  }
+}
+
+/* Chiffres du compte à rebours : basculent à chaque changement */
+@keyframes tick {
+  from {
+    opacity: 0;
+    transform: translateY(-38%);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@utility tick-in {
+  display: inline-block;
+  animation: tick 0.42s var(--ease-gala) both;
+}
+
+/* Bandeau défilant (informations clés) */
+@keyframes marquee {
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@utility marquee-track {
+  animation: marquee var(--marquee-duration, 38s) linear infinite;
+  &:hover {
+    animation-play-state: paused;
+  }
+}
+
+/* Trame qui glisse lentement en continu (aplat orange de l'appel final) */
+@keyframes pattern-slide {
+  to {
+    transform: translate3d(-96px, 0, 0);
+  }
+}
+
+@utility pattern-flow {
+  animation: pattern-slide 14s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   .losange-reveal,
   .drift-scroll,
@@ -385,8 +527,16 @@
   .strip-reveal,
   .side-reveal,
   .menu-unroll,
-  .thread-reveal {
+  .thread-reveal,
+  .weave-scroll,
+  .tick-in,
+  .letter-reveal,
+  .marquee-track,
+  .pattern-flow {
     animation: none !important;
+  }
+  .scroll-progress {
+    display: none;
   }
   .rosace-draw-view circle {
     animation: none !important;
