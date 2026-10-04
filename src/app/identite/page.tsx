@@ -12,7 +12,7 @@ import { passes } from "@/config/passes";
 import { PassTicket } from "@/features/ticketing/PassTicket";
 import { ETicket } from "@/features/ticketing/ETicket";
 import { formatPhone } from "@/lib/format";
-import beninPluriel from "../../../public/illustrations/benin-pluriel.svg";
+import beninPluriel from "../../../public/illustrations/benin-pluriel.webp";
 import qrSpecimen from "./qr-specimen.svg";
 
 export const metadata: Metadata = { title: "Identité visuelle · Gala TTCT", robots: { index: false } };
@@ -81,12 +81,12 @@ export default function IdentitePage() {
 
         <div className="grid grid-cols-12 gap-x-16 gap-y-20 px-20 pb-20">
           {/* Illustration */}
-          <Block index="01 · Illustration" title="Le Bénin pluriel" className="col-span-5">
+          <Block index="01 · Visuel clé" title="Le Bénin pluriel" className="col-span-5">
             <div className="relative flex justify-center bg-brun-soft py-10">
-              <Image src={beninPluriel} alt="" unoptimized className="h-[640px] w-auto" />
+              <Image src={beninPluriel} alt="" className="h-[680px] w-auto" />
             </div>
             <p className="mt-5 text-[17px] leading-relaxed text-sable">
-              La carte du Bénin habitée du nord au sud : parure peule, turban et boubou rayé bariba, gèlè du sud, tambour. Silhouettes découpées, sans photographie.
+              La carte du Bénin habitée de femmes et d’hommes en tenue traditionnelle moderne : gèlè, foulard, agbada, fila. Portraits détourés, étalonnage cuivré commun, coiffe qui sort du cadre.
             </p>
           </Block>
 

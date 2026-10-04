@@ -4,7 +4,7 @@ import { Motif, Rosace } from "@/components/motifs/Motif";
 import { Container, Section } from "@/components/ui/Layout";
 import { Eyebrow, Heading, Lead } from "@/components/ui/Typography";
 import { event } from "@/config/event";
-import beninPluriel from "../../../public/illustrations/benin-pluriel.svg";
+import beninPluriel from "../../../public/illustrations/benin-pluriel.webp";
 
 const pillars = [
   { title: "Plusieurs cultures", text: "Les traditions, les tenues et les rythmes du Bénin, du nord au sud." },
@@ -44,7 +44,7 @@ export function Intro() {
             </ol>
           </div>
 
-          {/* Le Bénin pluriel : illustration du nord au sud, sur une planche brune */}
+          {/* Le Bénin pluriel : photomontage dans la carte du pays, sur une planche brune */}
           <figure className="relative lg:col-span-6">
             <div aria-hidden className="absolute -right-3 -top-3 h-1/3 w-1/2 border-r-2 border-t-2 border-rouille sm:-right-4 sm:-top-4" />
             <div data-tone="dark" className="losange-reveal relative overflow-hidden bg-brun bg-grain text-(--fg)">
@@ -57,9 +57,9 @@ export function Intro() {
                 <Rosace rings={6} draw="view" className="pointer-events-none absolute -left-24 bottom-0 size-80 text-terre/40" />
                 <Image
                   src={beninPluriel}
-                  alt="Illustration : la carte du Bénin habitée, du nord au sud, par une femme peule aux perles, un homme bariba en turban et boubou rayé, et une femme du sud coiffée du gèlè, près d’un tambour."
-                  unoptimized
-                  className="relative h-auto w-[78%] max-w-[22rem] drift-scroll"
+                  alt="Photomontage : la carte du Bénin habitée de femmes et d’hommes en tenue traditionnelle moderne, gèlè, foulard, agbada et fila, sur fond de soleil orange."
+                  sizes="(min-width: 1024px) 26rem, 80vw"
+                  className="relative h-auto w-[84%] max-w-[26rem] drift-scroll"
                 />
               </div>
 
