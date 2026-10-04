@@ -111,7 +111,7 @@ export function Hero() {
         <div className="mt-14 flex flex-col items-center border-t border-(--line) pt-10 lg:mt-16">
           <p className="mb-6 text-[0.7rem] font-semibold uppercase tracking-[0.28em] text-orange">Le gala commence dans</p>
           <Countdown target={event.date} />
-          {!event.startTime && <p className="mt-5 text-xs text-sable">Heure de début à confirmer</p>}
+          {event.startTime && <p className="mt-5 text-xs text-sable">Samedi 19 décembre, début à {event.startTime}</p>}
         </div>
       </Container>
 

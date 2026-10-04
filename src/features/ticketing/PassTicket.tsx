@@ -17,7 +17,7 @@ const availabilityBadge: Record<PassAvailability, { tone: "neutre" | "orange" | 
 };
 
 /** Pass présenté comme un billet : corps + talon détachable daté. La quantité choisie part avec la réservation. */
-export function PassTicket({ slug, name, price, currency, seats, perks, availability, maxPerOrder, nameToConfirm, featured }: PassOffer) {
+export function PassTicket({ slug, name, price, currency, seats, perks, availability, maxPerOrder, featured }: PassOffer) {
   const [quantity, setQuantity] = useState(1);
   const soldOut = availability === "soldout";
   const badge = availabilityBadge[availability];
@@ -43,7 +43,6 @@ export function PassTicket({ slug, name, price, currency, seats, perks, availabi
         </div>
 
         <h3 className="mt-5 font-display text-[2.3rem] font-black uppercase leading-[0.95]">{name}</h3>
-        {nameToConfirm && <p className="mt-1.5 text-[0.7rem] font-semibold uppercase tracking-[0.14em] text-alerte">Nom à confirmer</p>}
 
         <p className="mt-5 flex items-baseline gap-2">
           <span className="font-display text-[3.6rem] font-black leading-none tabular-nums text-orange">{formatAmount(price)}</span>

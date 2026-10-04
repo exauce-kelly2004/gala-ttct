@@ -59,19 +59,21 @@ export function ETicket({ ticket, holder, id }: { ticket: Ticket; holder: string
             </dt>
             <dd className="mt-1 font-semibold">19 · 12 · 2026</dd>
           </div>
-          <div>
-            <dt className="flex items-center gap-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-sable">
-              <LuClock className="size-3.5" aria-hidden />
-              Heure
-            </dt>
-            <dd className="mt-1 font-semibold">{event.startTime ?? "À confirmer"}</dd>
-          </div>
+          {event.startTime && (
+            <div>
+              <dt className="flex items-center gap-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-sable">
+                <LuClock className="size-3.5" aria-hidden />
+                Heure
+              </dt>
+              <dd className="mt-1 font-semibold">{event.startTime}</dd>
+            </div>
+          )}
           <div className="col-span-2">
             <dt className="flex items-center gap-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-sable">
               <LuMapPin className="size-3.5" aria-hidden />
               Lieu
             </dt>
-            <dd className="mt-1 font-semibold">{event.venue ? `${event.venue}, ${event.city}` : `${event.city} · adresse à confirmer`}</dd>
+            <dd className="mt-1 font-semibold">{event.venue ? `${event.venue}, ${event.city}` : event.city}</dd>
           </div>
         </dl>
       </div>

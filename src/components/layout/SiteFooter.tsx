@@ -1,4 +1,3 @@
-import Link from "next/link";
 import type { ReactNode } from "react";
 import { LuPhone } from "react-icons/lu";
 import { Logo } from "@/components/brand/Logo";
@@ -6,11 +5,6 @@ import { MotifBand } from "@/components/motifs/Motif";
 import { event } from "@/config/event";
 import { formatPhone, telHref } from "@/lib/format";
 import { navLinks } from "./nav";
-
-const legal = [
-  { href: "/conditions", label: "Conditions de vente" },
-  { href: "/confidentialite", label: "Confidentialité" },
-];
 
 function Column({ title, children }: { title: string; children: ReactNode }) {
   return (
@@ -66,15 +60,6 @@ export function SiteFooter() {
 
         <div className="mt-14 flex flex-col gap-4 border-t border-(--line) pt-6 text-[0.8rem] text-sable sm:flex-row sm:items-center sm:justify-between">
           <p>© 2026 {event.organizer}</p>
-          <ul className="flex flex-wrap gap-x-6 gap-y-2">
-            {legal.map((l) => (
-              <li key={l.href}>
-                <Link href={l.href} className="link-zigzag hover:text-ivoire">
-                  {l.label}
-                </Link>
-              </li>
-            ))}
-          </ul>
         </div>
       </div>
     </footer>

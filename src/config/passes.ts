@@ -12,12 +12,10 @@ export type PassOffer = {
   currency: "FCFA";
   /** Personnes couvertes par un pass (Duo = 2). */
   seats: number;
-  /** Avantages confirmés ; les autres restent « à préciser ». */
+  /** Avantages confirmés uniquement. */
   perks: string[];
   availability: PassAvailability;
   maxPerOrder: number;
-  /** Nom commercial pas encore confirmé par l'organisateur. */
-  nameToConfirm?: boolean;
   /** Pass mis en avant (le plus complet). */
   featured?: boolean;
 };
@@ -31,10 +29,9 @@ export const passes: PassOffer[] = [
     price: 50000,
     currency: "FCFA",
     seats: 2,
-    perks: ["Entrée pour deux personnes", ...basePerks, "Avantages V.V.I.P à préciser"],
+    perks: ["Entrée pour deux personnes", ...basePerks],
     availability: "available",
     maxPerOrder: 5,
-    nameToConfirm: true,
     featured: true,
   },
   {
@@ -43,7 +40,7 @@ export const passes: PassOffer[] = [
     price: 25000,
     currency: "FCFA",
     seats: 2,
-    perks: ["Entrée pour deux personnes", ...basePerks, "Avantages V.I.P à préciser"],
+    perks: ["Entrée pour deux personnes", ...basePerks],
     availability: "available",
     maxPerOrder: 5,
   },

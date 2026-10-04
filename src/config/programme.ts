@@ -1,9 +1,9 @@
 /**
- * Programme de la soirée. Vide tant que l'organisateur ne l'a pas transmis :
- * la section affiche alors un état « programme en préparation » au lieu d'inventer des horaires.
+ * Programme de la soirée. Tant qu'il est vide, la section Programme et son lien
+ * ne s'affichent pas : on n'invente pas d'horaires.
  */
 export type ProgrammeItem = {
-  /** « 19:00 » */
+  /** « 20h00 » */
   time: string;
   title: string;
   /** Artiste, intervenant ou groupe. */

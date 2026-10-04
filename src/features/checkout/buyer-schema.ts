@@ -16,7 +16,6 @@ export const buyerSchema = z.object({
     .string()
     .transform(normalizePhone)
     .refine((v) => /^(\+229)?01\d{8}$/.test(v) || /^\+\d{8,15}$/.test(v), "Saisissez un numéro valide, par exemple 01 97 86 57 58."),
-  accept: z.literal(true, { error: "Acceptez les conditions de vente pour continuer." }),
 });
 
 export type BuyerInput = z.input<typeof buyerSchema>;

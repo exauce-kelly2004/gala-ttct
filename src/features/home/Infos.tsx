@@ -1,18 +1,18 @@
 import type { IconType } from "react-icons";
-import { LuCalendarDays, LuClock, LuDoorOpen, LuMapPin, LuPhone, LuRoute, LuShirt } from "react-icons/lu";
+import { LuCalendarDays, LuClock, LuDoorOpen, LuMapPin, LuPhone, LuShirt } from "react-icons/lu";
 import { Rosace } from "@/components/motifs/Motif";
 import { Container, Section } from "@/components/ui/Layout";
 import { Eyebrow, Heading } from "@/components/ui/Typography";
 import { event } from "@/config/event";
 import { formatPhone, telHref } from "@/lib/format";
 
-type Info = { icon: IconType; label: string; value: string; note?: string; pending?: boolean };
+/** Seules les informations connues sont affichées : une donnée `null` dans event.ts fait disparaître sa ligne. */
+type Info = { icon: IconType; label: string; value: string; note?: string };
 
 const infos: Info[] = [
   { icon: LuCalendarDays, label: "Date", value: "Samedi 19 décembre 2026" },
-  { icon: LuClock, label: "Horaires", value: event.startTime ?? "À confirmer", pending: !event.startTime, note: "L’heure d’ouverture des portes sera annoncée ici." },
-  { icon: LuMapPin, label: "Lieu", value: event.venue ?? event.city, note: event.venue ? event.city : "Adresse exacte à confirmer." },
-  { icon: LuRoute, label: "Accès", value: "À confirmer", pending: true, note: "Itinéraire et stationnement seront précisés avec le lieu." },
+  ...(event.startTime ? [{ icon: LuClock, label: "Horaires", value: event.startTime, note: "Début de la soirée." }] : []),
+  { icon: LuMapPin, label: "Lieu", value: event.venue ?? event.city, note: event.venue ? event.city : undefined },
   { icon: LuShirt, label: "Tenue", value: "Traditionnelle", note: "Venez dans la tenue de votre culture." },
   {
     icon: LuDoorOpen,
@@ -32,12 +32,12 @@ export function Infos() {
             <Heading className="mt-4 rise-on-view">Tout pour venir sereinement</Heading>
 
             <dl className="mt-10 grid border-t border-(--line) sm:grid-cols-2 sm:gap-x-10">
-              {infos.map(({ icon: Icon, label, value, note, pending }) => (
+              {infos.map(({ icon: Icon, label, value, note }) => (
                 <div key={label} className="flex gap-4 border-b border-(--line) py-6 rise-on-view">
                   <Icon className="mt-1 size-6 shrink-0 text-rouille" strokeWidth={1.6} aria-hidden />
                   <div>
                     <dt className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-(--fg-muted)">{label}</dt>
-                    <dd className={`mt-1 font-display text-[1.75rem] font-black uppercase leading-[1.02] ${pending ? "text-(--fg)/55" : ""}`}>{value}</dd>
+                    <dd className="mt-1 font-display text-[1.75rem] font-black uppercase leading-[1.02]">{value}</dd>
                     {note && <dd className="mt-1.5 text-[0.94rem] text-(--fg)/75">{note}</dd>}
                   </div>
                 </div>

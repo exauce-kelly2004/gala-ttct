@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { LuArrowLeft, LuArrowRight, LuLock, LuPencil, LuShieldCheck } from "react-icons/lu";
@@ -25,16 +24,9 @@ const steps: { n: Step; label: string }[] = [
   { n: 3, label: "Paiement" },
 ];
 
-/** État du formulaire : la case à cocher peut être décochée tant qu'on n'a pas validé. */
-type BuyerForm = Omit<BuyerInput, "accept"> & { accept: boolean };
+type BuyerForm = BuyerInput;
 
-const emptyBuyer: BuyerForm = {
-  lastName: "",
-  firstName: "",
-  email: "",
-  phone: "",
-  accept: false,
-};
+const emptyBuyer: BuyerForm = { lastName: "", firstName: "", email: "", phone: "" };
 
 /** Fil d'étapes : losanges reliés, comme le fil du programme. On peut revenir en arrière, pas sauter devant. */
 function StepRail({ current, onGo }: { current: Step; onGo: (s: Step) => void }) {
@@ -111,7 +103,7 @@ export function CheckoutFlow({ initialCart }: { initialCart: Cart }) {
     setCartError(null);
   };
 
-  const updateBuyer = <K extends keyof BuyerForm>(key: K, value: BuyerForm[K]) => {
+  const updateBuyer = (key: keyof BuyerForm, value: string) => {
     setBuyer((b) => ({ ...b, [key]: value }));
     if (errors[key]) setErrors((e) => ({ ...e, [key]: undefined }));
   };
@@ -126,7 +118,7 @@ export function CheckoutFlow({ initialCart }: { initialCart: Cart }) {
     }
     setErrors(next);
     // Focus sur le premier champ en erreur
-    const first = (["lastName", "firstName", "email", "phone", "accept"] as const).find((k) => next[k]);
+    const first = (["lastName", "firstName", "email", "phone"] as const).find((k) => next[k]);
     if (first) document.getElementById(`buyer-${first}`)?.focus();
     return null;
   };
@@ -241,9 +233,47 @@ export function CheckoutFlow({ initialCart }: { initialCart: Cart }) {
 
           {step === 2 && (
             <section aria-labelledby="step-title">
+              {/* La commande d'abord : l'acheteur voit ce qu'il réserve avant de remplir le formulaire */}
               <h2 id="step-title" ref={titleRef} tabIndex={-1} className="font-display text-[2.2rem] font-black uppercase leading-none outline-none">
-                Vos coordonnées
+                Votre commande
               </h2>
+              <div className="mt-6 border border-terre bg-brun-soft">
+                <div aria-hidden className="h-3 bg-brun text-rouille">
+                  <Motif name="losanges" id="step2-recap" scale={0.4} />
+                </div>
+                <div className="p-5 sm:p-6">
+                  <ul className="space-y-3">
+                    {lines.map((l) => (
+                      <li key={l.slug} className="flex items-baseline justify-between gap-4">
+                        <span>
+                          <span className="font-display text-[1.5rem] font-black tabular-nums">{l.quantity}</span> <span className="text-sable">×</span>{" "}
+                          <span className="font-semibold">{l.name}</span>
+                          <span className="block text-xs text-sable">
+                            {formatAmount(l.price)} FCFA · {l.seats > 1 ? `${l.seats} personnes` : "1 personne"} par pass
+                          </span>
+                        </span>
+                        <span className="shrink-0 tabular-nums text-(--fg)/85">{formatAmount(l.price * l.quantity)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  <div className="mt-5 flex flex-wrap items-end justify-between gap-4 border-t border-(--line) pt-5">
+                    <div>
+                      <p className="text-xs text-sable">
+                        Total · {seats} {seats > 1 ? "personnes" : "personne"}
+                      </p>
+                      <p className="mt-1 font-display text-[2.2rem] font-black leading-none text-orange tabular-nums">
+                        {formatAmount(total)} <span className="text-sm text-sable">FCFA</span>
+                      </p>
+                    </div>
+                    <button type="button" onClick={() => setStep(1)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange hover:text-ivoire">
+                      <LuPencil className="size-3.5" aria-hidden />
+                      Modifier
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <h3 className="mt-12 font-display text-[2rem] font-black uppercase leading-none">Vos coordonnées</h3>
               <p className="mt-2 text-sable">Vos billets seront envoyés à cette adresse e-mail. Aucun compte à créer.</p>
 
               <div className="mt-8 grid gap-6 sm:grid-cols-2">
@@ -287,32 +317,6 @@ export function CheckoutFlow({ initialCart }: { initialCart: Cart }) {
                   hint="Utilisé uniquement pour votre commande."
                   className="sm:col-span-2"
                 />
-              </div>
-
-              <div className="mt-8">
-                <label htmlFor="buyer-accept" className="flex cursor-pointer items-start gap-3 text-[0.95rem]">
-                  <input
-                    id="buyer-accept"
-                    type="checkbox"
-                    checked={buyer.accept}
-                    onChange={(e) => updateBuyer("accept", e.target.checked)}
-                    aria-invalid={errors.accept ? true : undefined}
-                    aria-describedby={errors.accept ? "buyer-accept-error" : undefined}
-                    className="mt-0.5 size-5 shrink-0 accent-(--color-orange)"
-                  />
-                  <span className="text-(--fg)/85">
-                    J’accepte les{" "}
-                    <Link href="/conditions" target="_blank" className="text-orange underline underline-offset-4">
-                      conditions de vente
-                    </Link>
-                    .
-                  </span>
-                </label>
-                {errors.accept && (
-                  <p id="buyer-accept-error" className="mt-2 text-sm font-medium text-alerte">
-                    {errors.accept}
-                  </p>
-                )}
               </div>
             </section>
           )}
@@ -375,22 +379,25 @@ export function CheckoutFlow({ initialCart }: { initialCart: Cart }) {
               <Motif name="losanges" id="recap-top" scale={0.5} />
             </div>
             <div className="p-5 sm:p-6">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-sable">Votre commande</p>
-              {lines.length === 0 ? (
-                <p className="mt-4 text-sm text-sable">Aucun pass sélectionné.</p>
-              ) : (
-                <ul className="mt-4 space-y-3">
-                  {lines.map((l) => (
-                    <li key={l.slug} className="flex items-baseline justify-between gap-4">
-                      <span>
-                        <span className="font-semibold tabular-nums">{l.quantity}</span> <span className="text-sable">×</span> {l.name}
-                      </span>
-                      <span className="shrink-0 tabular-nums text-(--fg)/85">{formatAmount(l.price * l.quantity)}</span>
-                    </li>
-                  ))}
-                </ul>
-              )}
-              <div className="mt-5 flex items-baseline justify-between border-t border-(--line) pt-5">
+              {/* À l'étape 2, le détail est déjà affiché au-dessus du formulaire : ici, seulement le total */}
+              <div className={step === 2 ? "hidden" : undefined}>
+                <p className="text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-sable">Votre commande</p>
+                {lines.length === 0 ? (
+                  <p className="mt-4 text-sm text-sable">Aucun pass sélectionné.</p>
+                ) : (
+                  <ul className="mt-4 space-y-3">
+                    {lines.map((l) => (
+                      <li key={l.slug} className="flex items-baseline justify-between gap-4">
+                        <span>
+                          <span className="font-semibold tabular-nums">{l.quantity}</span> <span className="text-sable">×</span> {l.name}
+                        </span>
+                        <span className="shrink-0 tabular-nums text-(--fg)/85">{formatAmount(l.price * l.quantity)}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              <div className={step === 2 ? "flex items-baseline justify-between" : "mt-5 flex items-baseline justify-between border-t border-(--line) pt-5"}>
                 <span className="text-sm text-sable">
                   Total
                   {seats > 0 && ` · ${seats} ${seats > 1 ? "personnes" : "personne"}`}
