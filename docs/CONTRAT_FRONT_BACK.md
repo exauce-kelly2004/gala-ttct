@@ -87,7 +87,7 @@ type Ticket = {
 
 ## 4 bis. Contrôle à l'entrée : `verifyTicket`
 
-Écran : `/scanner` (smartphone, caméra arrière). Un seul fichier à brancher : [`src/features/scanner/api.ts`](../src/features/scanner/api.ts), fonction `verifyTicket(code)`, puis `IS_DEMO = false`.
+Écran : `/espace/controle` (smartphone, caméra arrière). Un seul fichier à brancher : [`src/features/scanner/api.ts`](../src/features/scanner/api.ts), fonction `verifyTicket(code)`, puis `IS_DEMO = false`.
 
 ```ts
 verifyTicket(code: string): Promise<ScanResult>
@@ -110,8 +110,50 @@ type ScanResult = {
 - `code` est le contenu brut du QR (le jeton), ou le numéro de billet saisi à la main en secours.
 - Le serveur fait tout en **une opération atomique** : trouver le billet, vérifier le statut, passer `VALID` → `USED`, journaliser (billet, membre du personnel, résultat, heure), répondre. Un second scan, même simultané, reçoit `USED`.
 - Un billet Duo se scanne une seule fois pour les deux personnes.
-- La route doit exiger la connexion du personnel (rôle STAFF) : la page `/scanner` elle-même n'est pas protégée côté front.
+- La route doit exiger une session `ADMIN` ou `STAFF` (voir 4 ter).
 - En cas d'erreur réseau, la fonction lève une exception : l'écran invite à rescanner (le billet n'est alors pas considéré comme validé).
+
+## 4 ter. Espace réservé : connexion, tableau de bord, équipe
+
+L'espace `/espace` regroupe le contrôle des billets (`/espace/controle`, ancien `/scanner`), le tableau de bord, les commandes, les billets et l'équipe. Il n'est ouvert qu'aux adresses e-mail **invitées** par un administrateur. Trois fichiers à brancher, chacun avec `IS_DEMO` à passer à `false` :
+
+| Fichier | Fonctions |
+| --- | --- |
+| [`src/features/auth/api.ts`](../src/features/auth/api.ts) | `requestCode`, `verifyCode`, `getSession`, `signOut`, `listInvitations`, `invite`, `revokeInvitation` |
+| [`src/features/dashboard/api.ts`](../src/features/dashboard/api.ts) | `getStats`, `listOrders`, `listTickets` |
+| [`src/features/scanner/api.ts`](../src/features/scanner/api.ts) | `verifyTicket` (voir 4 bis) |
+
+**Connexion (sans mot de passe)** : l'utilisateur saisit son e-mail (`requestCode`), reçoit un code à 6 chiffres, le saisit (`verifyCode`).
+
+- `requestCode` répond **toujours de la même façon**, que l'adresse soit invitée ou non (on ne révèle pas la liste). Le serveur n'envoie le code que si l'adresse est invitée.
+- Le code est à usage unique, expire vite (ex. 10 min), avec un nombre limité d'essais et une limitation de débit.
+- `verifyCode` ouvre la session : **cookie httpOnly posé par le serveur**. Le front ne stocke aucun secret. Il lève une exception si le code est faux ou expiré.
+- `getSession` renvoie `{ email, role }` ou `null`. Une invitation révoquée ferme la session immédiatement.
+
+**Rôles** :
+
+| Rôle | Accès |
+| --- | --- |
+| `ADMIN` | tout : tableau de bord, commandes, billets, équipe, contrôle |
+| `STAFF` | uniquement le contrôle des billets (`verifyTicket`) |
+
+**Règle de sécurité principale** : le front masque les écrans selon le rôle, mais **chaque route serveur doit revérifier la session et le rôle** (`verifyTicket` : ADMIN ou STAFF ; statistiques, listes, invitations : ADMIN). Un écran caché ne protège rien. Protégez aussi les pages `/espace/*` côté serveur (redirection vers `/espace/connexion` sans session valide).
+
+**Équipe** : `invite(email, role)` envoie un e-mail d'invitation et lève une exception si l'adresse est déjà invitée. `revokeInvitation(email)` retire l'accès. L'invité arrive avec `status: "PENDING"` jusqu'à sa première connexion, puis `"ACTIVE"`. Prévoir au moins un premier ADMIN créé directement en base.
+
+**Tableau de bord** (calculé depuis la base, jamais de chiffre inventé) :
+
+```ts
+getStats(): Promise<{
+  ticketsSold: number; seatsSold: number; revenue: number; orders: number;
+  ticketsValid: number; ticketsUsed: number; ticketsCancelled: number;
+  byPass: { slug: string; name: string; sold: number; revenue: number }[];
+}>
+listOrders({ query?, status? }): Promise<OrderRow[]>   // recherche : référence, nom, e-mail, téléphone, paiement
+listTickets({ query?, status? }): Promise<TicketRow[]> // recherche : numéro, nom, e-mail, commande
+```
+
+Les types complets sont dans `src/features/dashboard/api.ts`. Les listes doivent être paginées côté serveur dès qu'elles grossissent.
 
 ## 5. Obligations légales côté back-end (Bénin)
 

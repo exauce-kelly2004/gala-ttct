@@ -7,7 +7,7 @@ export default function robots(): MetadataRoute.Robots {
       userAgent: "*",
       allow: "/",
       // Parcours d'achat personnel et pages outils : pas d'indexation
-      disallow: ["/reserver", "/confirmation", "/design-system", "/affiche", "/identite", "/partage", "/affiche-benin-pluriel", "/scanner", "/api/"],
+      disallow: ["/reserver", "/confirmation", "/design-system", "/affiche", "/identite", "/partage", "/affiche-benin-pluriel", "/scanner", "/espace", "/api/"],
     },
     sitemap: `${siteUrl}/sitemap.xml`,
   };

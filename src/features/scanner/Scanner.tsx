@@ -4,7 +4,6 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import jsQR from "jsqr";
 import { LuCamera, LuCircleCheck, LuCircleX, LuKeyboard, LuTriangleAlert } from "react-icons/lu";
 import type { IconType } from "react-icons";
-import { Logo } from "@/components/brand/Logo";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
@@ -116,22 +115,11 @@ export function Scanner() {
   const verdict = result ? verdicts[result.status] : null;
 
   return (
-    <div className="mx-auto flex min-h-svh w-full max-w-lg flex-col px-4 pb-10 pt-5">
-      <header className="flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3">
-          <Logo variant="emblem" width={36} priority className="w-9" />
-          <div>
-            <h1 className="font-display text-[1.5rem] font-black uppercase leading-none">Contrôle des billets</h1>
-            <p className="text-[0.66rem] font-semibold uppercase tracking-[0.2em] text-sable">Gala TTCT · 19 décembre 2026</p>
-          </div>
-        </div>
+    <div className="mx-auto flex w-full max-w-lg flex-col">
+      <header>
+        <h1 className="font-display text-[clamp(2.2rem,8vw,3rem)] font-black uppercase leading-none">Contrôle des billets</h1>
+        <p className="mt-1 text-[0.66rem] font-semibold uppercase tracking-[0.2em] text-sable">Gala TTCT · 19 décembre 2026</p>
       </header>
-
-      {IS_DEMO && (
-        <p className="mt-4 border border-orange/60 px-3 py-2 text-xs font-semibold uppercase tracking-[0.14em] text-orange">
-          Démonstration : codes d’essai uniquement, aucun billet réel
-        </p>
-      )}
 
       {result && verdict ? (
         /* Résultat : plein écran utile, une seule action */
