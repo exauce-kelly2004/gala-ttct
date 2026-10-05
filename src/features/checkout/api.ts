@@ -9,6 +9,7 @@
  * Contrat détaillé : docs/CONTRAT_FRONT_BACK.md
  */
 import { findPass } from "@/config/passes";
+import { newDemoToken, registerDemoTicket } from "@/features/scanner/demo-registry";
 import type { CreateOrderRequest, Order } from "./order";
 
 const STORAGE_KEY = "ttct-demo-order";
@@ -40,17 +41,22 @@ export async function createOrder(request: CreateOrderRequest): Promise<{ refere
     lines,
     total: lines.reduce((s, l) => s + l.price * l.quantity, 0),
     currency: "FCFA",
-    // Billets d'exemple : numéros factices, pas de QR code (généré par le back-end)
+    // Billets de démonstration : numéros factices, jeton local (réel : créé par le back-end)
     tickets: lines.flatMap((l) =>
-      Array.from({ length: l.quantity }, (_, i) => ({
-        number: `EXEMPLE-${l.slug.toUpperCase()}-${i + 1}`,
-        passName: l.name,
-        seats: l.seats,
-        holders: l.seats > 1 ? [buyerName, guestsOf(l.slug)[i] ?? ""].filter(Boolean) : [buyerName],
-        status: "VALID" as const,
-        qrCode: null,
-        pdfUrl: null,
-      })),
+      Array.from({ length: l.quantity }, (_, i) => {
+        const ticket = {
+          number: `EXEMPLE-${l.slug.toUpperCase()}-${i + 1}`,
+          passName: l.name,
+          seats: l.seats,
+          holders: l.seats > 1 ? [buyerName, guestsOf(l.slug)[i] ?? ""].filter(Boolean) : [buyerName],
+          status: "VALID" as const,
+          qrToken: newDemoToken(),
+          pdfUrl: null,
+        };
+        // Le « scanner » de démonstration retrouvera ce billet grâce à son jeton
+        registerDemoTicket(ticket.qrToken, { number: ticket.number, passName: l.name, seats: l.seats, holders: ticket.holders, orderReference: "DEMO-0001", paid: true });
+        return ticket;
+      }),
     ),
   };
 
@@ -83,5 +89,5 @@ const exampleOrder: Order = {
   lines: [{ slug: "duo-vip", name: "Pass Duo V.I.P", price: 25000, seats: 2, quantity: 1 }],
   total: 25000,
   currency: "FCFA",
-  tickets: [{ number: "EXEMPLE-DUO-VIP-1", passName: "Pass Duo V.I.P", seats: 2, holders: ["Prénom Nom", "Prénom Nom (invité)"], status: "VALID", qrCode: null, pdfUrl: null }],
+  tickets: [{ number: "EXEMPLE-DUO-VIP-1", passName: "Pass Duo V.I.P", seats: 2, holders: ["Prénom Nom", "Prénom Nom (invité)"], status: "VALID", qrToken: "TTCT-EXEMPLE", pdfUrl: null }],
 };

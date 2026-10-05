@@ -10,6 +10,8 @@
  * Contrat détaillé : docs/CONTRAT_FRONT_BACK.md (section « Contrôle à l'entrée »).
  */
 
+import { findDemoTicket, markDemoUsed } from "./demo-registry";
+
 /** Indique à l'interface qu'elle tourne sur des données simulées (bandeau « démonstration »). */
 export const IS_DEMO = true;
 
@@ -84,6 +86,17 @@ export async function verifyTicket(code: string): Promise<ScanResult> {
   await new Promise((r) => setTimeout(r, 450));
   const scannedAt = new Date().toISOString();
   const key = code.trim().toUpperCase();
+
+  // Billets achetés dans ce navigateur pendant la démonstration
+  const bought = findDemoTicket(code.trim());
+  if (bought) {
+    if (bought.status === "VALID") {
+      markDemoUsed(code.trim(), scannedAt);
+      return { status: "VALID", ticket: bought.ticket, scannedAt };
+    }
+    return { status: bought.status, ticket: bought.ticket, scannedAt };
+  }
+
   const found = demoTickets[key];
 
   if (!found) return { status: "INVALID", scannedAt };

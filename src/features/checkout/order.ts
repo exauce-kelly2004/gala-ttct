@@ -36,8 +36,12 @@ export type Ticket = {
   /** Noms inscrits sur le billet : l'acheteur, puis son invité pour un Pass Duo. À renvoyer aussi lors du scan. */
   holders: string[];
   status: TicketStatus;
-  /** QR code produit par le back-end : URL d'image ou data URL (PNG / SVG). `null` tant qu'il n'existe pas. */
-  qrCode: string | null;
+  /**
+   * Jeton unique du billet, créé et enregistré par le back-end (lié au type de pass dans sa base).
+   * Le front-end en dessine le QR code et le rend téléchargeable. Aucune donnée personnelle dedans.
+   * `null` tant que le billet n'existe pas.
+   */
+  qrToken: string | null;
   /** Lien de téléchargement sécurisé du PDF, produit par le back-end. */
   pdfUrl: string | null;
 };

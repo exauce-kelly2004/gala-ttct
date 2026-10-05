@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { LuArrowLeft, LuCircleCheck, LuDownload, LuMail, LuPrinter } from "react-icons/lu";
+import { LuArrowLeft, LuCircleCheck, LuDownload, LuImageDown, LuMail, LuPrinter } from "react-icons/lu";
 import { Rosace } from "@/components/motifs/Motif";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
@@ -9,6 +9,7 @@ import { Container, Section } from "@/components/ui/Layout";
 import { event } from "@/config/event";
 import { ETicket } from "@/features/ticketing/ETicket";
 import { formatAmount } from "@/lib/format";
+import { downloadTicketPng, downloadTicketsPdf } from "@/features/ticketing/download";
 import { getOrder, IS_DEMO } from "./api";
 import type { Order } from "./order";
 
@@ -27,6 +28,23 @@ export function Confirmation({ reference }: { reference: string | null }) {
       cancelled = true;
     };
   }, [reference]);
+
+  const [downloading, setDownloading] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
+  const run = async (job: () => Promise<void>) => {
+    setDownloading(true);
+    setDownloadError(null);
+    try {
+      await job();
+    } catch {
+      setDownloadError("Le téléchargement a échoué. Utilisez « Imprimer mes billets » pour enregistrer en PDF.");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const ticketEls = () => (state.status === "ready" ? state.order.tickets.map((_, i) => document.getElementById(`billet-${i}`)!) : []);
 
   if (state.status === "loading") {
     return (
@@ -113,18 +131,24 @@ export function Confirmation({ reference }: { reference: string | null }) {
                 </p>
 
                 <div className="mt-6 grid gap-3">
-                  {pdfTickets.length > 0 ? (
-                    pdfTickets.map((t) => (
-                      <Button key={t.number} href={t.pdfUrl!} className="w-full" download>
-                        <LuDownload className="size-4" aria-hidden />
-                        PDF · {t.number}
-                      </Button>
-                    ))
-                  ) : (
-                    <Button onClick={() => window.print()} className="w-full">
-                      <LuPrinter className="size-4" aria-hidden />
-                      Imprimer mes billets
+                  <Button onClick={() => void run(async () => downloadTicketsPdf(ticketEls(), `billets-gala-ttct-${order.reference}`))} disabled={downloading} className="w-full">
+                    <LuDownload className="size-4" aria-hidden />
+                    {downloading ? "Préparation…" : order.tickets.length > 1 ? "Télécharger mes billets (PDF)" : "Télécharger mon billet (PDF)"}
+                  </Button>
+                  {pdfTickets.map((t) => (
+                    <Button key={t.number} href={t.pdfUrl!} variant="secondary" className="w-full" download>
+                      <LuDownload className="size-4" aria-hidden />
+                      PDF officiel · {t.number}
                     </Button>
+                  ))}
+                  <Button onClick={() => window.print()} variant="secondary" className="w-full">
+                    <LuPrinter className="size-4" aria-hidden />
+                    Imprimer mes billets
+                  </Button>
+                  {downloadError && (
+                    <p role="alert" className="text-sm font-medium text-alerte">
+                      {downloadError}
+                    </p>
                   )}
                   <Button href="/" variant="secondary" className="w-full">
                     Retour à l’accueil
@@ -140,7 +164,18 @@ export function Confirmation({ reference }: { reference: string | null }) {
               </h2>
               <div className="mt-8 grid justify-items-center gap-8 sm:grid-cols-2 sm:justify-items-start print:mt-0 print:grid-cols-2">
                 {order.tickets.map((t, i) => (
-                  <ETicket key={t.number} ticket={t} holder={holder} id={`billet-${i}`} />
+                  <div key={t.number} className="flex w-full max-w-sm flex-col gap-3 print:max-w-none">
+                    <ETicket ticket={t} holder={holder} id={`billet-${i}`} />
+                    <Button
+                      variant="secondary"
+                      disabled={downloading || !t.qrToken}
+                      onClick={() => void run(async () => downloadTicketPng(document.getElementById(`billet-${i}`)!, `billet-${t.number}`))}
+                      className="w-full print:hidden"
+                    >
+                      <LuImageDown className="size-4" aria-hidden />
+                      Enregistrer en image
+                    </Button>
+                  </div>
                 ))}
               </div>
             </div>

@@ -14,7 +14,6 @@ import { ETicket } from "@/features/ticketing/ETicket";
 import { formatPhone } from "@/lib/format";
 import beninPluriel from "../../../public/illustrations/benin-pluriel.webp";
 import affiche from "../../../docs/affiche/affiche-gala-ttct-2026-benin-pluriel.jpg";
-import qrSpecimen from "./qr-specimen.svg";
 
 export const metadata: Metadata = { title: "Identité visuelle · Gala TTCT", robots: { index: false } };
 
@@ -208,7 +207,7 @@ export default function IdentitePage() {
                 <ETicket
                   id="id-billet"
                   holder="Prénom Nom"
-                  ticket={{ number: "TTCT26-SPECIMEN", passName: "Pass Duo V.I.P", seats: 2, holders: ["Prénom Nom", "Prénom Nom"], status: "VALID", qrCode: qrSpecimen.src, pdfUrl: null }}
+                  ticket={{ number: "TTCT26-SPECIMEN", passName: "Pass Duo V.I.P", seats: 2, holders: ["Prénom Nom", "Prénom Nom"], status: "VALID", qrToken: "TTCT-SPECIMEN", pdfUrl: null }}
                 />
               </div>
               <div className="col-span-7">

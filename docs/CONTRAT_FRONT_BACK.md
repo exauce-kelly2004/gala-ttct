@@ -1,9 +1,9 @@
 # Contrat front-end / back-end : réservation et billets
 
 Ce document décrit ce que le front-end attend du back-end pour le parcours d'achat.
-**Répartition :** le front-end (formulaires, parcours, affichage) est fait. Le back-end gère la base de données, le paiement, la génération automatique des billets, les QR codes, les PDF et les e-mails.
+**Répartition :** le front-end (formulaires, parcours, affichage, dessin du QR code, téléchargement du billet en PNG et PDF) est fait. Le back-end gère la base de données, le paiement, la création des billets et de leurs jetons uniques, la vérification au scan et les e-mails.
 
-Le front-end ne génère **aucun** numéro de billet, jeton ou QR code.
+Le front-end ne génère **aucun** numéro de billet ni jeton (en démonstration seulement, un jeton local est créé). Il **dessine** le QR code à partir du jeton fourni.
 
 ## 1. Où brancher
 
@@ -67,14 +67,14 @@ type Ticket = {
   seats: number;    // 2 pour un Pass Duo, 1 pour un Solo
   holders: string[]; // noms sur le billet : acheteur, puis invité pour un Duo
   status: "PENDING" | "VALID" | "USED" | "CANCELLED";
-  qrCode: string | null; // URL d'image ou data URL (PNG ou SVG) générée par le back-end
-  pdfUrl: string | null; // lien sécurisé de téléchargement du PDF
+  qrToken: string | null; // jeton unique du billet, créé et enregistré par le back-end (lié au type de pass dans sa base)
+  pdfUrl: string | null; // optionnel : PDF officiel généré par le back-end
 };
 ```
 
 - Retourner `null` si la référence est inconnue : le front affiche « Réservation introuvable ».
-- `qrCode` est affiché dans un carré clair de 176 px (`<img>`, `object-contain`). Si la valeur est `null`, le billet montre « QR code délivré après paiement ».
-- Si `pdfUrl` est renseigné, le front affiche un bouton de téléchargement par billet. Sinon, il propose « Imprimer mes billets » (impression du navigateur, qui permet aussi d'enregistrer en PDF).
+- `qrToken` : le front en dessine le QR code (carré clair de 176 px) et propose le téléchargement du billet complet (PNG par billet, PDF de tous les billets). Si la valeur est `null`, le billet montre « QR code délivré après paiement ». **Le jeton doit être imprévisible et unique** (au moins 20 caractères aléatoires, ex. `TTCT-7K2M9QXH4PBD8R3F6WNA`) ; la base y associe le type de pass (Solo, Duo V.I.P, Duo V.V.I.P), les titulaires et la commande.
+- Le téléchargement du billet est fait par le front. Si `pdfUrl` est renseigné, un bouton « PDF officiel » s’ajoute.
 - Choix actuel du front : **un billet par pass**. Un Pass Duo donne un billet valable pour 2 personnes. Si vous préférez un billet par personne, renvoyez simplement 2 billets avec `seats: 1`.
 - Le statut `PENDING` est prévu, si le webhook n'a pas encore confirmé le paiement au moment où l'acheteur revient sur le site.
 

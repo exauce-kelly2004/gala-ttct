@@ -4,6 +4,7 @@ import { Motif } from "@/components/motifs/Motif";
 import { Badge } from "@/components/ui/Badge";
 import { event } from "@/config/event";
 import type { Ticket, TicketStatus } from "@/features/checkout/order";
+import { TicketQr } from "./TicketQr";
 
 const statusBadge: Record<TicketStatus, { tone: "neutre" | "valide" | "alerte" | "orange"; label: string }> = {
   PENDING: { tone: "orange", label: "En attente" },
@@ -13,8 +14,9 @@ const statusBadge: Record<TicketStatus, { tone: "neutre" | "valide" | "alerte" |
 };
 
 /**
- * Billet électronique affiché après paiement. Le QR code n'est PAS généré ici :
- * le back-end fournit `ticket.qrCode` (URL ou data URL) ; à défaut, un emplacement réservé l'annonce.
+ * Billet électronique affiché après paiement. Le jeton (`ticket.qrToken`) vient du back-end, qui l'enregistre
+ * avec le type de pass ; le front en dessine le QR code. Sans jeton, un emplacement réservé l'annonce.
+ * L'attribut `id` permet de capturer le billet pour le téléchargement (PNG / PDF).
  */
 export function ETicket({ ticket, holder, id }: { ticket: Ticket; holder: string; id: string }) {
   const badge = statusBadge[ticket.status];
@@ -22,6 +24,7 @@ export function ETicket({ ticket, holder, id }: { ticket: Ticket; holder: string
 
   return (
     <article
+      id={id}
       data-tone="dark"
       aria-label={`Billet ${ticket.number}`}
       className="flex w-full max-w-sm flex-col border border-terre bg-brun-soft text-(--fg) [print-color-adjust:exact] print:break-inside-avoid"
@@ -92,9 +95,8 @@ export function ETicket({ ticket, holder, id }: { ticket: Ticket; holder: string
       {/* Talon : QR code fourni par le back-end */}
       <div className="flex flex-col items-center px-6 pb-6 pt-7">
         <div className="grid size-44 place-items-center bg-ivoire p-3">
-          {ticket.qrCode ? (
-            // eslint-disable-next-line @next/next/no-img-element -- image fournie par le back-end (data URL ou URL signée)
-            <img src={ticket.qrCode} alt={`QR code du billet ${ticket.number}`} className="size-full object-contain [image-rendering:pixelated]" />
+          {ticket.qrToken ? (
+            <TicketQr token={ticket.qrToken} label={`QR code du billet ${ticket.number}`} />
           ) : (
             <div className="relative grid size-full place-items-center overflow-hidden border-2 border-dashed border-terre/60 text-center text-terre">
               <Motif name="filigrane" id={`${id}-qr`} scale={0.5} className="absolute inset-0 text-terre/15" />
