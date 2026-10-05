@@ -10,6 +10,7 @@
  * Contrat détaillé : docs/CONTRAT_FRONT_BACK.md (section « Contrôle à l'entrée »).
  */
 
+import { passes } from "@/config/passes";
 import { allDemoTickets, findBaseDemoTicket, matchesQuery } from "@/features/dashboard/api";
 import { findDemoTicket, markDemoUsed } from "./demo-registry";
 
@@ -21,6 +22,8 @@ export type ScanStatus = "VALID" | "USED" | "CANCELLED" | "INVALID";
 export type ScanTicket = {
   /** Numéro public du billet. */
   number: string;
+  /** Type de pass : "duo-vvip" | "duo-vip" | "solo". */
+  passSlug: string;
   passName: string;
   seats: number;
   /** Noms inscrits sur le billet : un ou deux (Pass Duo). */
@@ -52,16 +55,17 @@ export const DEMO_CODES = [
 const demoTickets: Record<string, { status: "VALID" | "USED" | "CANCELLED"; ticket: ScanTicket }> = {
   "DEMO-SOLO": {
     status: "VALID",
-    ticket: { number: "EXEMPLE-SOLO-1", passName: "Pass Solo", seats: 1, holders: ["Awa Sossou"], orderReference: "DEMO-0001", paid: true },
+    ticket: { number: "EXEMPLE-SOLO-1", passSlug: "solo", passName: "Pass Solo", seats: 1, holders: ["Awa Sossou"], orderReference: "DEMO-0001", paid: true },
   },
   "DEMO-DUO": {
     status: "VALID",
-    ticket: { number: "EXEMPLE-DUO-VIP-1", passName: "Pass Duo V.I.P", seats: 2, holders: ["Koffi Adjovi", "Mariam Adjovi"], orderReference: "DEMO-0002", paid: true },
+    ticket: { number: "EXEMPLE-DUO-VIP-1", passSlug: "duo-vip", passName: "Pass Duo V.I.P", seats: 2, holders: ["Koffi Adjovi", "Mariam Adjovi"], orderReference: "DEMO-0002", paid: true },
   },
   "DEMO-USED": {
     status: "USED",
     ticket: {
       number: "EXEMPLE-DUO-VVIP-1",
+      passSlug: "duo-vvip",
       passName: "Pass Duo V.V.I.P",
       seats: 2,
       holders: ["Jean Tossou", "Agnès Tossou"],
@@ -72,7 +76,7 @@ const demoTickets: Record<string, { status: "VALID" | "USED" | "CANCELLED"; tick
   },
   "DEMO-CANCELLED": {
     status: "CANCELLED",
-    ticket: { number: "EXEMPLE-SOLO-2", passName: "Pass Solo", seats: 1, holders: ["Paul Dossou"], orderReference: "DEMO-0004", paid: true },
+    ticket: { number: "EXEMPLE-SOLO-2", passSlug: "solo", passName: "Pass Solo", seats: 1, holders: ["Paul Dossou"], orderReference: "DEMO-0004", paid: true },
   },
 };
 
@@ -104,7 +108,7 @@ export async function verifyTicket(code: string): Promise<ScanResult> {
   // 2. Billets du jeu de démonstration de base, par code court
   const base = findBaseDemoTicket(trimmed);
   if (base) {
-    const ticket: ScanTicket = { number: base.number, passName: base.passName, seats: base.seats, holders: base.holders, orderReference: base.orderReference, paid: base.status !== "PENDING" };
+    const ticket: ScanTicket = { number: base.number, passSlug: base.passSlug, passName: base.passName, seats: base.seats, holders: base.holders, orderReference: base.orderReference, paid: base.status !== "PENDING" };
     if (base.status === "VALID") {
       markDemoUsed(base.number, ticket, scannedAt);
       return { status: "VALID", ticket, scannedAt };
@@ -137,6 +141,8 @@ export type CheckinSummary = {
   seats: number;
   seatsEntered: number;
   seatsRemaining: number;
+  /** Même point, type de pass par type de pass. */
+  byPass: { slug: string; name: string; tickets: number; entered: number; remaining: number; seats: number; seatsEntered: number }[];
 };
 
 /**
@@ -155,11 +161,17 @@ export async function getCheckinSummary(): Promise<CheckinSummary> {
     seats: sum(admissible),
     seatsEntered: sum(entered),
     seatsRemaining: sum(admissible) - sum(entered),
+    byPass: passes.map((p) => {
+      const mine = admissible.filter((t) => t.passSlug === p.slug);
+      const inside = mine.filter((t) => t.status === "USED");
+      return { slug: p.slug, name: p.name, tickets: mine.length, entered: inside.length, remaining: mine.length - inside.length, seats: sum(mine), seatsEntered: sum(inside) };
+    }),
   };
 }
 
 export type TicketLookup = {
   number: string;
+  passSlug: string;
   passName: string;
   seats: number;
   holders: string[];
@@ -178,5 +190,5 @@ export async function searchTickets(query: string): Promise<TicketLookup[]> {
   return allDemoTickets()
     .filter((t) => matchesQuery(query, t.number, t.orderReference, ...t.holders))
     .slice(0, 12)
-    .map((t) => ({ number: t.number, passName: t.passName, seats: t.seats, holders: t.holders, status: t.status, usedAt: t.usedAt }));
+    .map((t) => ({ number: t.number, passSlug: t.passSlug, passName: t.passName, seats: t.seats, holders: t.holders, status: t.status, usedAt: t.usedAt }));
 }

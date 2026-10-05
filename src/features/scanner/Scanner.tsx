@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { CheckinSummaryPanel, TicketSearch } from "./StaffTools";
+import { tierOf } from "@/features/ticketing/tier";
 import { DEMO_CODES, IS_DEMO, verifyTicket, type ScanResult, type ScanStatus } from "./api";
 
 /** Le texte et l'icône portent toujours le sens : la couleur n'est qu'un renfort. */
@@ -133,6 +134,10 @@ export function Scanner() {
 
           {result.ticket ? (
             <dl className="mt-7 border-t border-(--line) pt-5 text-left">
+              {/* Type de pass en grand : le contrôleur sait tout de suite quel accès accorder */}
+              <p className={cn("mb-5 py-2.5 text-center font-display text-[2.2rem] font-black uppercase leading-none tracking-[0.18em]", tierOf(result.ticket.passSlug).banner)}>
+                {tierOf(result.ticket.passSlug).label}
+              </p>
               <dt className="text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-sable">{result.ticket.holders.length > 1 ? "Titulaires" : "Titulaire"}</dt>
               {result.ticket.holders.map((name) => (
                 <dd key={name} className="mt-1 font-display text-[1.9rem] font-black uppercase leading-none">

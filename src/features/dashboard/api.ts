@@ -44,6 +44,7 @@ export type OrderRow = {
 export type TicketRow = {
   /** Code du billet, imprimé dessus : permet de retrouver l'acheteur sans scanner. */
   number: string;
+  passSlug: string;
   passName: string;
   seats: number;
   holders: string[];
@@ -68,10 +69,15 @@ const pick = <T,>(list: T[], i: number, step: number) => list[(i * step) % list.
 
 /** Code de billet de démonstration, stable d'un chargement à l'autre : « GALA-7K2M-9QXH ». */
 function demoCode(order: number, n: number) {
-  let seed = (order + 1) * 7919 + (n + 1) * 104729;
+  // xorshift32 : bien mélangé, stable d'un chargement à l'autre
+  let h = (Math.imul(order + 1, 2654435761) ^ Math.imul(n + 1, 40503)) >>> 0 || 1;
   const char = () => {
-    seed = (seed * 1103515245 + 12345) % 2147483648;
-    return CODE_ALPHABET[seed % CODE_ALPHABET.length];
+    h ^= h << 13;
+    h >>>= 0;
+    h ^= h >>> 17;
+    h ^= h << 5;
+    h >>>= 0;
+    return CODE_ALPHABET[h % CODE_ALPHABET.length];
   };
   return `GALA-${char()}${char()}${char()}${char()}-${char()}${char()}${char()}${char()}`;
 }
@@ -106,6 +112,7 @@ const baseTickets: TicketRow[] = demoOrders.flatMap((o, oi) =>
     const pass = passes.find((p) => p.slug === slug)!;
     return Array.from({ length: quantity }, (_, n): TicketRow => ({
       number: demoCode(oi, n),
+      passSlug: pass.slug,
       passName: pass.name,
       seats: pass.seats,
       holders: pass.seats > 1 ? [o.buyerName, o.guests[n]] : [o.buyerName],
@@ -137,6 +144,7 @@ export function allDemoTickets(): TicketRow[] {
     .filter(([, e]) => !baseNumbers.has(normCode(e.ticket.number)))
     .map(([, e]): TicketRow => ({
       number: e.ticket.number,
+      passSlug: e.ticket.passSlug,
       passName: e.ticket.passName,
       seats: e.ticket.seats,
       holders: e.ticket.holders,

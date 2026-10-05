@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { LuSearch } from "react-icons/lu";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
+import { tierOf } from "@/features/ticketing/tier";
+import { cn } from "@/lib/cn";
 import { getCheckinSummary, searchTickets, type CheckinSummary, type TicketLookup } from "./api";
 
 function Count({ label, value, sub }: { label: string; value: number; sub: string }) {
@@ -46,7 +48,22 @@ export function CheckinSummaryPanel({ refreshKey }: { refreshKey: number }) {
           Chargement…
         </p>
       )}
-      <p className="mt-2 text-xs text-sable">Personnes (un Pass Duo = 2) et billets payés.</p>
+      {summary && (
+        <ul className="mt-2 divide-y divide-(--line) border-y border-(--line)">
+          {summary.byPass.map((p) => (
+            <li key={p.slug} className="grid grid-cols-[5.5rem_1fr_auto] items-center gap-3 py-2.5 text-sm">
+              <span className={cn("px-2 py-1 text-center font-display text-[1.05rem] font-black uppercase leading-none tracking-[0.1em]", tierOf(p.slug).banner)}>{tierOf(p.slug).label}</span>
+              <span className="text-sable">
+                {p.entered} / {p.tickets} billets
+              </span>
+              <span className="font-semibold tabular-nums">
+                {p.seatsEntered} / {p.seats} pers.
+              </span>
+            </li>
+          ))}
+        </ul>
+      )}
+      <p className="mt-2 text-xs text-sable">Personnes (un Pass Duo = 2) et billets payés. Entrées / attendues.</p>
     </section>
   );
 }
@@ -120,7 +137,7 @@ export function TicketSearch({ onValidate, busy, refreshKey }: { onValidate: (co
                     </p>
                   ))}
                   <p className="mt-0.5 text-xs text-sable">
-                    {t.passName} · <span className="font-mono">{t.number}</span>
+                    <span className="font-semibold uppercase tracking-[0.08em] text-orange">{tierOf(t.passSlug).label}</span> · {t.passName} · <span className="font-mono">{t.number}</span>
                   </p>
                 </div>
                 <Badge tone={statusBadge[t.status].tone}>{statusBadge[t.status].label}</Badge>

@@ -31,6 +31,8 @@ export type OrderLine = Pick<PassOffer, "slug" | "name" | "price" | "seats"> & {
 export type Ticket = {
   /** Numéro public lisible à l'entrée. */
   number: string;
+  /** Type de pass : "duo-vvip" | "duo-vip" | "solo". Détermine le design du billet et le bandeau au contrôle. */
+  passSlug: string;
   passName: string;
   seats: number;
   /** Noms inscrits sur le billet : l'acheteur, puis son invité pour un Pass Duo. À renvoyer aussi lors du scan. */

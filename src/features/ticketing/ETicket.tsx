@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { event } from "@/config/event";
 import type { Ticket, TicketStatus } from "@/features/checkout/order";
 import { TicketQr } from "./TicketQr";
+import { tierOf } from "./tier";
 
 const statusBadge: Record<TicketStatus, { tone: "neutre" | "valide" | "alerte" | "orange"; label: string }> = {
   PENDING: { tone: "orange", label: "En attente" },
@@ -21,17 +22,23 @@ const statusBadge: Record<TicketStatus, { tone: "neutre" | "valide" | "alerte" |
 export function ETicket({ ticket, holder, id }: { ticket: Ticket; holder: string; id: string }) {
   const badge = statusBadge[ticket.status];
   const holders = ticket.holders.length > 0 ? ticket.holders : [holder];
+  const tier = tierOf(ticket.passSlug);
 
   return (
     <article
       id={id}
       data-tone="dark"
       aria-label={`Billet ${ticket.number}`}
-      className="flex w-full max-w-sm flex-col border border-terre bg-brun-soft text-(--fg) [print-color-adjust:exact] print:break-inside-avoid"
+      className={`flex w-full max-w-sm flex-col border bg-brun-soft text-(--fg) [print-color-adjust:exact] print:break-inside-avoid ${tier.card}`}
     >
-      <div aria-hidden className="h-5 bg-brun text-rouille">
+      <div aria-hidden className={`h-5 ${tier.band}`}>
         <Motif name="losanges" id={`${id}-top`} scale={0.625} />
       </div>
+
+      {/* Ruban du type d'accès : se lit d'un coup d'œil, aussi une fois imprimé en noir et blanc */}
+      <p className={`px-6 py-1.5 text-center font-display text-[1.25rem] font-black uppercase leading-none tracking-[0.2em] ${tier.ribbon}`}>
+        {ticket.passSlug === "solo" ? "Accès Solo" : `Accès ${tier.label}`}
+      </p>
 
       {/* Corps */}
       <div className="p-6">
@@ -112,7 +119,7 @@ export function ETicket({ ticket, holder, id }: { ticket: Ticket; holder: string
         <p className="mt-3 max-w-[16rem] text-center text-xs text-sable">À présenter à l’entrée, sur téléphone ou imprimé. Si le QR code ne se lit pas, donnez ce code à l’accueil. Ne partagez pas ce billet.</p>
       </div>
 
-      <div aria-hidden className="h-3 bg-rouille text-brun/60">
+      <div aria-hidden className={`h-3 ${tier.foot}`}>
         <Motif name="zigzag" id={`${id}-bottom`} scale={0.4} />
       </div>
     </article>

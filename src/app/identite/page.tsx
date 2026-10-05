@@ -207,7 +207,7 @@ export default function IdentitePage() {
                 <ETicket
                   id="id-billet"
                   holder="Prénom Nom"
-                  ticket={{ number: "TTCT26-SPECIMEN", passName: "Pass Duo V.I.P", seats: 2, holders: ["Prénom Nom", "Prénom Nom"], status: "VALID", qrToken: "TTCT-SPECIMEN", pdfUrl: null }}
+                  ticket={{ number: "TTCT26-SPECIMEN", passSlug: "duo-vip", passName: "Pass Duo V.I.P", seats: 2, holders: ["Prénom Nom", "Prénom Nom"], status: "VALID", qrToken: "TTCT-SPECIMEN", pdfUrl: null }}
                 />
               </div>
               <div className="col-span-7">

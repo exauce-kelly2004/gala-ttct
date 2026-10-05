@@ -48,6 +48,7 @@ export async function createOrder(request: CreateOrderRequest): Promise<{ refere
       Array.from({ length: l.quantity }, (_, i) => {
         const ticket = {
           number: newDemoCode(),
+          passSlug: l.slug,
           passName: l.name,
           seats: l.seats,
           holders: l.seats > 1 ? [buyerName, guestsOf(l.slug)[i] ?? ""].filter(Boolean) : [buyerName],
@@ -58,7 +59,7 @@ export async function createOrder(request: CreateOrderRequest): Promise<{ refere
         // Le « scanner » de démonstration retrouvera ce billet grâce à son jeton
         registerDemoTicket(
           ticket.qrToken,
-          { number: ticket.number, passName: l.name, seats: l.seats, holders: ticket.holders, orderReference: "DEMO-0001", paid: true },
+          { number: ticket.number, passSlug: l.slug, passName: l.name, seats: l.seats, holders: ticket.holders, orderReference: "DEMO-0001", paid: true },
           { buyerEmail: request.buyer.email, createdAt },
         );
         return ticket;
@@ -95,5 +96,5 @@ const exampleOrder: Order = {
   lines: [{ slug: "duo-vip", name: "Pass Duo V.I.P", price: 25000, seats: 2, quantity: 1 }],
   total: 25000,
   currency: "FCFA",
-  tickets: [{ number: "GALA-EXEM-PLE1", passName: "Pass Duo V.I.P", seats: 2, holders: ["Prénom Nom", "Prénom Nom (invité)"], status: "VALID", qrToken: "TTCT-EXEMPLE", pdfUrl: null }],
+  tickets: [{ number: "GALA-EXEM-PLE1", passSlug: "duo-vip", passName: "Pass Duo V.I.P", seats: 2, holders: ["Prénom Nom", "Prénom Nom (invité)"], status: "VALID", qrToken: "TTCT-EXEMPLE", pdfUrl: null }],
 };
