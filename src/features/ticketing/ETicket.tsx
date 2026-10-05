@@ -18,6 +18,7 @@ const statusBadge: Record<TicketStatus, { tone: "neutre" | "valide" | "alerte" |
  */
 export function ETicket({ ticket, holder, id }: { ticket: Ticket; holder: string; id: string }) {
   const badge = statusBadge[ticket.status];
+  const holders = ticket.holders.length > 0 ? ticket.holders : [holder];
 
   return (
     <article
@@ -49,8 +50,12 @@ export function ETicket({ ticket, holder, id }: { ticket: Ticket; holder: string
 
         <dl className="mt-6 grid grid-cols-2 gap-x-4 gap-y-4 border-t border-(--line) pt-5 text-sm">
           <div className="col-span-2">
-            <dt className="text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-sable">Titulaire</dt>
-            <dd className="mt-1 font-semibold">{holder}</dd>
+            <dt className="text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-sable">{holders.length > 1 ? "Titulaires" : "Titulaire"}</dt>
+            {holders.map((name) => (
+              <dd key={name} className="mt-1 font-semibold">
+                {name}
+              </dd>
+            ))}
           </div>
           <div>
             <dt className="flex items-center gap-1.5 text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-sable">

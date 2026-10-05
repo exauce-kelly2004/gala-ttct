@@ -29,6 +29,9 @@ export async function createOrder(request: CreateOrderRequest): Promise<{ refere
     return pass ? [{ slug: pass.slug, name: pass.name, price: pass.price, seats: pass.seats, quantity }] : [];
   });
 
+  const buyerName = `${request.buyer.firstName} ${request.buyer.lastName}`.trim();
+  const guestsOf = (slug: string) => request.items.find((i) => i.passSlug === slug)?.guestNames ?? [];
+
   const order: Order = {
     reference: "DEMO-0001",
     status: "PAID",
@@ -43,6 +46,7 @@ export async function createOrder(request: CreateOrderRequest): Promise<{ refere
         number: `EXEMPLE-${l.slug.toUpperCase()}-${i + 1}`,
         passName: l.name,
         seats: l.seats,
+        holders: l.seats > 1 ? [buyerName, guestsOf(l.slug)[i] ?? ""].filter(Boolean) : [buyerName],
         status: "VALID" as const,
         qrCode: null,
         pdfUrl: null,
@@ -79,5 +83,5 @@ const exampleOrder: Order = {
   lines: [{ slug: "duo-vip", name: "Pass Duo V.I.P", price: 25000, seats: 2, quantity: 1 }],
   total: 25000,
   currency: "FCFA",
-  tickets: [{ number: "EXEMPLE-DUO-VIP-1", passName: "Pass Duo V.I.P", seats: 2, status: "VALID", qrCode: null, pdfUrl: null }],
+  tickets: [{ number: "EXEMPLE-DUO-VIP-1", passName: "Pass Duo V.I.P", seats: 2, holders: ["Prénom Nom", "Prénom Nom (invité)"], status: "VALID", qrCode: null, pdfUrl: null }],
 };

@@ -10,7 +10,12 @@ export type Buyer = { firstName: string; lastName: string; email: string; phone:
 /** Envoyé par le front-end au moment de payer. */
 export type CreateOrderRequest = {
   buyer: Buyer;
-  items: { passSlug: string; quantity: number }[];
+  items: {
+    passSlug: string;
+    quantity: number;
+    /** Pass Duo uniquement : nom complet du second invité, un par pass (même longueur que `quantity`). */
+    guestNames?: string[];
+  }[];
   /** Preuve du consentement aux CGV (la charge de la preuve incombe au vendeur, Code du numérique art. 341). */
   termsAcceptedAt: string;
   /** Version des CGV acceptées (date de mise à jour affichée sur la page). */
@@ -28,6 +33,8 @@ export type Ticket = {
   number: string;
   passName: string;
   seats: number;
+  /** Noms inscrits sur le billet : l'acheteur, puis son invité pour un Pass Duo. À renvoyer aussi lors du scan. */
+  holders: string[];
   status: TicketStatus;
   /** QR code produit par le back-end : URL d'image ou data URL (PNG / SVG). `null` tant qu'il n'existe pas. */
   qrCode: string | null;

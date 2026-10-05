@@ -24,7 +24,11 @@ Les types partagés sont dans [`src/features/checkout/order.ts`](../src/features
 ```ts
 type CreateOrderRequest = {
   buyer: { firstName: string; lastName: string; email: string; phone: string };
-  items: { passSlug: string; quantity: number }[]; // passSlug : "duo-vvip" | "duo-vip" | "solo"
+  items: {
+    passSlug: string; // "duo-vvip" | "duo-vip" | "solo"
+    quantity: number;
+    guestNames?: string[]; // Pass Duo uniquement : nom complet du 2e invité, un par pass (longueur = quantity)
+  }[];
   termsAcceptedAt: string; // ISO 8601 : moment où l'acheteur a coché « J'accepte les CGV »
   termsVersion: string;    // version des CGV acceptées (date de mise à jour)
 };
@@ -61,6 +65,7 @@ type Ticket = {
   number: string;   // numéro public, lisible à l'entrée
   passName: string; // ex. "Pass Duo V.I.P"
   seats: number;    // 2 pour un Pass Duo, 1 pour un Solo
+  holders: string[]; // noms sur le billet : acheteur, puis invité pour un Duo
   status: "PENDING" | "VALID" | "USED" | "CANCELLED";
   qrCode: string | null; // URL d'image ou data URL (PNG ou SVG) générée par le back-end
   pdfUrl: string | null; // lien sécurisé de téléchargement du PDF
@@ -78,6 +83,35 @@ type Ticket = {
 - La redirection navigateur n'est **jamais** une preuve de paiement : seule la confirmation serveur (webhook) passe la commande à `PAID`.
 - `/confirmation?ref=...` ne doit pas exposer une commande à n'importe qui. Prévoyez une référence non devinable ou un jeton signé dans l'URL.
 - Le QR code ne contient qu'un jeton, aucune donnée personnelle.
+- **Contrôle à l'entrée** : le back-end doit stocker `holders` avec le billet. En scannant le jeton, le contrôleur doit recevoir le ou les noms, le type de pass, la référence et le statut (payé / valide, déjà utilisé, annulé, inconnu). Un billet Duo se scanne une seule fois pour les deux personnes.
+
+## 4 bis. Contrôle à l'entrée : `verifyTicket`
+
+Écran : `/scanner` (smartphone, caméra arrière). Un seul fichier à brancher : [`src/features/scanner/api.ts`](../src/features/scanner/api.ts), fonction `verifyTicket(code)`, puis `IS_DEMO = false`.
+
+```ts
+verifyTicket(code: string): Promise<ScanResult>
+
+type ScanResult = {
+  status: "VALID" | "USED" | "CANCELLED" | "INVALID";
+  ticket?: {                // absent si INVALID (billet inconnu)
+    number: string;         // numéro public
+    passName: string;
+    seats: number;
+    holders: string[];      // 1 nom (Solo) ou 2 noms (Duo)
+    orderReference: string;
+    paid: boolean;
+    usedAt?: string;        // ISO 8601, si USED : heure du premier passage
+  };
+  scannedAt: string;        // ISO 8601
+};
+```
+
+- `code` est le contenu brut du QR (le jeton), ou le numéro de billet saisi à la main en secours.
+- Le serveur fait tout en **une opération atomique** : trouver le billet, vérifier le statut, passer `VALID` → `USED`, journaliser (billet, membre du personnel, résultat, heure), répondre. Un second scan, même simultané, reçoit `USED`.
+- Un billet Duo se scanne une seule fois pour les deux personnes.
+- La route doit exiger la connexion du personnel (rôle STAFF) : la page `/scanner` elle-même n'est pas protégée côté front.
+- En cas d'erreur réseau, la fonction lève une exception : l'écran invite à rescanner (le billet n'est alors pas considéré comme validé).
 
 ## 5. Obligations légales côté back-end (Bénin)
 

@@ -85,10 +85,16 @@ export function CheckoutFlow({ initialCart }: { initialCart: Cart }) {
   const [payError, setPayError] = useState<string | null>(null);
   const [accepted, setAccepted] = useState(false);
   const [acceptError, setAcceptError] = useState(false);
+  const [guests, setGuests] = useState<Record<string, string>>({});
+  const [guestErrors, setGuestErrors] = useState<Record<string, string>>({});
   const titleRef = useRef<HTMLHeadingElement>(null);
   const firstRender = useRef(true);
 
   const lines = cartLines(cart);
+  // Un Pass Duo = un billet pour deux personnes : on demande le nom du second invité, pass par pass
+  const guestSlots = lines.flatMap((l) =>
+    l.seats > 1 ? Array.from({ length: l.quantity }, (_, i) => ({ key: `${l.slug}-${i}`, slug: l.slug, name: l.name, n: i + 1, of: l.quantity })) : [],
+  );
   const total = linesTotal(lines);
   const seats = linesSeats(lines);
 
@@ -127,12 +133,27 @@ export function CheckoutFlow({ initialCart }: { initialCart: Cart }) {
     return null;
   };
 
+  const validateGuests = () => {
+    const next: Record<string, string> = {};
+    for (const s of guestSlots) {
+      if ((guests[s.key] ?? "").trim().length < 2) next[s.key] = "Saisissez le nom complet de votre invité, il figurera sur le billet.";
+    }
+    setGuestErrors(next);
+    const first = guestSlots.find((s) => next[s.key]);
+    if (first) document.getElementById(`guest-${first.key}`)?.focus();
+    return Object.keys(next).length === 0;
+  };
+
   const pay = async (data: Buyer) => {
     setPaying(true);
     try {
       const { reference, paymentUrl } = await createOrder({
         buyer: data,
-        items: lines.map((l) => ({ passSlug: l.slug, quantity: l.quantity })),
+        items: lines.map((l) => ({
+          passSlug: l.slug,
+          quantity: l.quantity,
+          ...(l.seats > 1 && { guestNames: Array.from({ length: l.quantity }, (_, i) => (guests[`${l.slug}-${i}`] ?? "").trim()) }),
+        })),
         termsAcceptedAt: new Date().toISOString(),
         termsVersion: legal.updatedAt,
       });
@@ -154,7 +175,9 @@ export function CheckoutFlow({ initialCart }: { initialCart: Cart }) {
       }
       setStep(2);
     } else if (step === 2) {
-      if (validateBuyer()) setStep(3);
+      const buyerOk = validateBuyer();
+      // Les deux validations s'exécutent pour afficher toutes les erreurs d'un coup
+      if (validateGuests() && buyerOk) setStep(3);
     } else {
       const data = validateBuyer();
       // Acceptation des CGV obligatoire avant paiement (Code du numérique, art. 338 et 343)
@@ -330,6 +353,29 @@ export function CheckoutFlow({ initialCart }: { initialCart: Cart }) {
                   className="sm:col-span-2"
                 />
               </div>
+              {guestSlots.length > 0 && (
+                <>
+                  <h3 className="mt-12 font-display text-[2rem] font-black uppercase leading-none">Vos invités</h3>
+                  <p className="mt-2 text-sable">Chaque Pass Duo est nominatif : les deux noms sont inscrits sur le billet et affichés au contrôle à l’entrée.</p>
+                  <div className="mt-8 grid gap-6">
+                    {guestSlots.map((s) => (
+                      <Field
+                        key={s.key}
+                        id={`guest-${s.key}`}
+                        label={`Invité · ${s.name}${s.of > 1 ? ` n° ${s.n}` : ""}`}
+                        autoComplete="off"
+                        placeholder="Prénom et nom"
+                        value={guests[s.key] ?? ""}
+                        onChange={(e) => {
+                          setGuests((g) => ({ ...g, [s.key]: e.target.value }));
+                          if (guestErrors[s.key]) setGuestErrors((er) => ({ ...er, [s.key]: "" }));
+                        }}
+                        error={guestErrors[s.key] || undefined}
+                      />
+                    ))}
+                  </div>
+                </>
+              )}
               {/* Information à la collecte (Code du numérique, art. 415) */}
               <p className="mt-6 text-sm leading-relaxed text-sable">
                 Vos données servent uniquement à traiter votre commande, à vous envoyer vos billets et à contrôler l’accès au gala. Elles ne sont ni vendues ni utilisées pour de la
@@ -358,6 +404,16 @@ export function CheckoutFlow({ initialCart }: { initialCart: Cart }) {
                     </p>
                     <p className="text-sm text-(--fg)/80">{buyer.email}</p>
                     <p className="text-sm text-(--fg)/80">{buyer.phone}</p>
+                    {guestSlots.length > 0 && (
+                      <>
+                        <p className="mt-4 text-[0.68rem] font-semibold uppercase tracking-[0.22em] text-sable">{guestSlots.length > 1 ? "Invités" : "Invité"}</p>
+                        {guestSlots.map((s) => (
+                          <p key={s.key} className="mt-1 text-sm text-(--fg)/80">
+                            {(guests[s.key] ?? "").trim()} <span className="text-sable">· {s.name}</span>
+                          </p>
+                        ))}
+                      </>
+                    )}
                   </div>
                   <button type="button" onClick={() => setStep(2)} className="inline-flex items-center gap-1.5 text-sm font-semibold text-orange hover:text-ivoire">
                     <LuPencil className="size-3.5" aria-hidden />
