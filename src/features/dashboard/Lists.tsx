@@ -183,7 +183,7 @@ export function TicketsView() {
     <>
       <Toolbar
         title="Billets"
-        placeholder="Numéro de billet, nom, e-mail, commande"
+        placeholder="Code du billet (GALA-…), nom, e-mail, commande"
         query={query}
         onQuery={setQuery}
         status={status}
@@ -203,10 +203,10 @@ export function TicketsView() {
         </p>
       )}
       {rows && (
-        <Table head={["Billet", "Pass", "Titulaires", "E-mail acheteur", "Créé le", "Utilisé le", "Statut"]} empty={rows.length === 0}>
+        <Table head={["Code du billet", "Pass", "Titulaires", "Acheteur", "Commande", "Créé le", "Utilisé le", "Statut"]} empty={rows.length === 0}>
           {rows.map((t) => (
             <tr key={t.number}>
-              <td className="px-4 py-3 font-mono text-[0.8rem]">{t.number}</td>
+              <td className="whitespace-nowrap px-4 py-3 font-mono text-[0.9rem] font-semibold text-ivoire">{t.number}</td>
               <td className="whitespace-nowrap px-4 py-3">{t.passName}</td>
               <td className="px-4 py-3">
                 {t.holders.map((h) => (
@@ -216,6 +216,7 @@ export function TicketsView() {
                 ))}
               </td>
               <td className="px-4 py-3 text-sable">{t.buyerEmail}</td>
+              <td className="whitespace-nowrap px-4 py-3 font-mono text-[0.8rem] text-sable">{t.orderReference}</td>
               <td className="whitespace-nowrap px-4 py-3 text-sable">{when(t.createdAt)}</td>
               <td className="whitespace-nowrap px-4 py-3 text-sable">{t.usedAt ? when(t.usedAt) : "—"}</td>
               <td className="px-4 py-3">

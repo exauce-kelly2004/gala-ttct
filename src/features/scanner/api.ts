@@ -10,6 +10,7 @@
  * Contrat détaillé : docs/CONTRAT_FRONT_BACK.md (section « Contrôle à l'entrée »).
  */
 
+import { allDemoTickets, findBaseDemoTicket, matchesQuery } from "@/features/dashboard/api";
 import { findDemoTicket, markDemoUsed } from "./demo-registry";
 
 /** Indique à l'interface qu'elle tourne sur des données simulées (bandeau « démonstration »). */
@@ -78,33 +79,104 @@ const demoTickets: Record<string, { status: "VALID" | "USED" | "CANCELLED"; tick
 // Billets « consommés » pendant la session de démonstration : un second scan doit être refusé
 const consumed = new Map<string, string>();
 
+const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
 /**
- * Vérifie un billet à partir du contenu de son QR code (ou de son numéro saisi à la main).
+ * Vérifie un billet à partir du contenu de son QR code OU du code court imprimé sur le billet (saisi à la main).
  * Réel : le serveur valide ET marque le billet comme utilisé dans la même opération.
  */
 export async function verifyTicket(code: string): Promise<ScanResult> {
-  await new Promise((r) => setTimeout(r, 450));
+  await pause(450);
   const scannedAt = new Date().toISOString();
-  const key = code.trim().toUpperCase();
+  const trimmed = code.trim();
 
-  // Billets achetés dans ce navigateur pendant la démonstration
-  const bought = findDemoTicket(code.trim());
+  // 1. Billets achetés dans ce navigateur pendant la démonstration (par jeton du QR ou code court)
+  const bought = findDemoTicket(trimmed);
   if (bought) {
-    if (bought.status === "VALID") {
-      markDemoUsed(code.trim(), scannedAt);
-      return { status: "VALID", ticket: bought.ticket, scannedAt };
+    const { key, entry } = bought;
+    if (entry.status === "VALID") {
+      markDemoUsed(key, entry.ticket, scannedAt);
+      return { status: "VALID", ticket: entry.ticket, scannedAt };
     }
-    return { status: bought.status, ticket: bought.ticket, scannedAt };
+    return { status: entry.status, ticket: entry.ticket, scannedAt };
   }
 
-  const found = demoTickets[key];
+  // 2. Billets du jeu de démonstration de base, par code court
+  const base = findBaseDemoTicket(trimmed);
+  if (base) {
+    const ticket: ScanTicket = { number: base.number, passName: base.passName, seats: base.seats, holders: base.holders, orderReference: base.orderReference, paid: base.status !== "PENDING" };
+    if (base.status === "VALID") {
+      markDemoUsed(base.number, ticket, scannedAt);
+      return { status: "VALID", ticket, scannedAt };
+    }
+    return { status: base.status === "CANCELLED" ? "CANCELLED" : "INVALID", ticket, scannedAt };
+  }
 
+  // 3. Codes d'essai fixes
+  const found = demoTickets[trimmed.toUpperCase()];
   if (!found) return { status: "INVALID", scannedAt };
   if (found.status === "VALID") {
-    const firstPass = consumed.get(key);
+    const firstPass = consumed.get(trimmed.toUpperCase());
     if (firstPass) return { status: "USED", ticket: { ...found.ticket, usedAt: firstPass }, scannedAt };
-    consumed.set(key, scannedAt);
+    consumed.set(trimmed.toUpperCase(), scannedAt);
     return { status: "VALID", ticket: found.ticket, scannedAt };
   }
   return { status: found.status, ticket: found.ticket, scannedAt };
+}
+
+/* ---------------------------------------------------------------------- */
+/* Vue du personnel de contrôle : billets et personnes, JAMAIS d'argent    */
+/* ---------------------------------------------------------------------- */
+
+export type CheckinSummary = {
+  /** Billets payés et valables (utilisés compris). */
+  tickets: number;
+  ticketsEntered: number;
+  ticketsRemaining: number;
+  /** Personnes attendues / entrées (un Pass Duo = 2). */
+  seats: number;
+  seatsEntered: number;
+  seatsRemaining: number;
+};
+
+/**
+ * « Point des billets » de l'entrée. Accessible au rôle STAFF : le serveur ne doit renvoyer ici que des comptages
+ * de billets et de personnes, aucun montant, aucune donnée de paiement.
+ */
+export async function getCheckinSummary(): Promise<CheckinSummary> {
+  await pause(250);
+  const admissible = allDemoTickets().filter((t) => t.status === "VALID" || t.status === "USED");
+  const entered = admissible.filter((t) => t.status === "USED");
+  const sum = (list: { seats: number }[]) => list.reduce((s, t) => s + t.seats, 0);
+  return {
+    tickets: admissible.length,
+    ticketsEntered: entered.length,
+    ticketsRemaining: admissible.length - entered.length,
+    seats: sum(admissible),
+    seatsEntered: sum(entered),
+    seatsRemaining: sum(admissible) - sum(entered),
+  };
+}
+
+export type TicketLookup = {
+  number: string;
+  passName: string;
+  seats: number;
+  holders: string[];
+  status: "VALID" | "USED" | "CANCELLED" | "PENDING";
+  usedAt?: string;
+};
+
+/**
+ * Retrouve des billets par code, nom ou numéro de commande, quand le QR code ne se scanne pas.
+ * Accessible au rôle STAFF : ni e-mail, ni téléphone, ni montant dans la réponse. L'entrée se valide ensuite
+ * avec `verifyTicket(number)`. Réel : au moins 3 caractères exigés, résultats limités.
+ */
+export async function searchTickets(query: string): Promise<TicketLookup[]> {
+  await pause(300);
+  if (query.trim().length < 3) return [];
+  return allDemoTickets()
+    .filter((t) => matchesQuery(query, t.number, t.orderReference, ...t.holders))
+    .slice(0, 12)
+    .map((t) => ({ number: t.number, passName: t.passName, seats: t.seats, holders: t.holders, status: t.status, usedAt: t.usedAt }));
 }

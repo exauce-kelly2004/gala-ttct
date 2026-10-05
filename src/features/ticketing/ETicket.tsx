@@ -107,9 +107,9 @@ export function ETicket({ ticket, holder, id }: { ticket: Ticket; holder: string
             </div>
           )}
         </div>
-        <p className="mt-4 text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-sable">Numéro de billet</p>
-        <p className="mt-1 font-mono text-[0.95rem] font-semibold tracking-[0.06em] text-ivoire">{ticket.number}</p>
-        <p className="mt-3 max-w-[16rem] text-center text-xs text-sable">À présenter à l’entrée, sur téléphone ou imprimé. Ne partagez pas ce billet.</p>
+        <p className="mt-4 text-[0.62rem] font-semibold uppercase tracking-[0.22em] text-sable">Code du billet</p>
+        <p className="mt-1 border border-dashed border-terre px-3 py-1.5 font-mono text-[1.15rem] font-semibold tracking-[0.12em] text-ivoire">{ticket.number}</p>
+        <p className="mt-3 max-w-[16rem] text-center text-xs text-sable">À présenter à l’entrée, sur téléphone ou imprimé. Si le QR code ne se lit pas, donnez ce code à l’accueil. Ne partagez pas ce billet.</p>
       </div>
 
       <div aria-hidden className="h-3 bg-rouille text-brun/60">

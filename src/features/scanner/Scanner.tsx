@@ -7,6 +7,7 @@ import type { IconType } from "react-icons";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
+import { CheckinSummaryPanel, TicketSearch } from "./StaffTools";
 import { DEMO_CODES, IS_DEMO, verifyTicket, type ScanResult, type ScanStatus } from "./api";
 
 /** Le texte et l'icône portent toujours le sens : la couleur n'est qu'un renfort. */
@@ -149,7 +150,7 @@ export function Scanner() {
                   <dd className="mt-1 font-semibold">{result.ticket.paid ? "Payé" : "Non payé"}</dd>
                 </div>
                 <div>
-                  <dt className="text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-sable">Billet</dt>
+                  <dt className="text-[0.62rem] font-semibold uppercase tracking-[0.2em] text-sable">Code du billet</dt>
                   <dd className="mt-1 break-all font-mono text-[0.85rem]">{result.ticket.number}</dd>
                 </div>
                 <div>
@@ -208,11 +209,13 @@ export function Scanner() {
             </Button>
           </section>
 
-          {/* Secours : saisie du code ou du numéro de billet */}
+          <CheckinSummaryPanel refreshKey={history.length} />
+
+          {/* Secours : saisie du code imprimé sur le billet */}
           <form onSubmit={submitManual} className="mt-6 border-t border-(--line) pt-5">
             <label htmlFor="manual-code" className="flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.16em]">
               <LuKeyboard className="size-4 text-orange" aria-hidden />
-              Saisir un code manuellement
+              Entrer le code du billet
             </label>
             <div className="mt-3 flex gap-2">
               <input
@@ -222,7 +225,7 @@ export function Scanner() {
                 autoComplete="off"
                 autoCapitalize="characters"
                 spellCheck={false}
-                placeholder="Numéro de billet"
+                placeholder="GALA-7K2M-9QXH"
                 className="min-h-12 min-w-0 flex-1 border border-(--line) bg-brun-soft px-4 font-mono text-[1rem] text-(--fg) placeholder:text-(--fg)/40 focus:border-(--accent) focus:outline-none"
               />
               <Button type="submit" disabled={checking || !manual.trim()}>
@@ -230,6 +233,8 @@ export function Scanner() {
               </Button>
             </div>
           </form>
+
+          <TicketSearch onValidate={(c) => void check(c)} busy={checking} refreshKey={history.length} />
 
           {IS_DEMO && (
             <div className="mt-5">

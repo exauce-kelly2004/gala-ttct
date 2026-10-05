@@ -62,7 +62,7 @@ type Order = {
 };
 
 type Ticket = {
-  number: string;   // numéro public, lisible à l'entrée
+  number: string;   // CODE DU BILLET, imprimé dessus : court, unique, lisible à voix haute (ex. GALA-7K2M-9QXH, sans 0/O ni 1/I). Il permet de retrouver l acheteur sans scanner.
   passName: string; // ex. "Pass Duo V.I.P"
   seats: number;    // 2 pour un Pass Duo, 1 pour un Solo
   holders: string[]; // noms sur le billet : acheteur, puis invité pour un Duo
@@ -107,11 +107,18 @@ type ScanResult = {
 };
 ```
 
-- `code` est le contenu brut du QR (le jeton), ou le numéro de billet saisi à la main en secours.
+- `code` est le contenu brut du QR (le jeton) **ou le code du billet** (`number`) saisi à la main quand le scan échoue. Le serveur accepte les deux, sans tenir compte de la casse, des espaces ni des tirets.
 - Le serveur fait tout en **une opération atomique** : trouver le billet, vérifier le statut, passer `VALID` → `USED`, journaliser (billet, membre du personnel, résultat, heure), répondre. Un second scan, même simultané, reçoit `USED`.
 - Un billet Duo se scanne une seule fois pour les deux personnes.
 - La route doit exiger une session `ADMIN` ou `STAFF` (voir 4 ter).
 - En cas d'erreur réseau, la fonction lève une exception : l'écran invite à rescanner (le billet n'est alors pas considéré comme validé).
+
+**Vue du personnel de contrôle (STAFF) : billets et personnes, jamais d’argent.** Deux fonctions s’ajoutent à `verifyTicket`, dans le même fichier :
+
+- `getCheckinSummary()` : `{ tickets, ticketsEntered, ticketsRemaining, seats, seatsEntered, seatsRemaining }` (billets payés et valables ; `seats` = personnes, un Duo = 2).
+- `searchTickets(query)` : retrouve des billets par code, nom ou commande quand le QR ne se lit pas. Réponse limitée à `{ number, passName, seats, holders, status, usedAt }`. **Ni e-mail, ni téléphone, ni montant.** Minimum 3 caractères, 12 résultats au plus. L’entrée se valide ensuite avec `verifyTicket(number)`.
+
+**Tout ce qui touche à l’argent ou aux coordonnées des clients est réservé aux ADMIN** : montants, paiements, commandes, e-mails et téléphones. Côté serveur, ces champs ne doivent même pas être renvoyés à un STAFF. L’administrateur retrouve un acheteur en tapant le code du billet dans la page Billets (`listTickets`).
 
 ## 4 ter. Espace réservé : connexion, tableau de bord, équipe
 
@@ -135,7 +142,7 @@ L'espace `/espace` regroupe le contrôle des billets (`/espace/controle`, ancien
 | Rôle | Accès |
 | --- | --- |
 | `ADMIN` | tout : tableau de bord, commandes, billets, équipe, contrôle |
-| `STAFF` | uniquement le contrôle des billets (`verifyTicket`) |
+| `STAFF` | contrôle des billets : `verifyTicket`, `getCheckinSummary`, `searchTickets` (aucune donnée financière) |
 
 **Règle de sécurité principale** : le front masque les écrans selon le rôle, mais **chaque route serveur doit revérifier la session et le rôle** (`verifyTicket` : ADMIN ou STAFF ; statistiques, listes, invitations : ADMIN). Un écran caché ne protège rien. Protégez aussi les pages `/espace/*` côté serveur (redirection vers `/espace/connexion` sans session valide).
 
