@@ -64,6 +64,7 @@ type Order = {
 type Ticket = {
   number: string;   // CODE DU BILLET, imprimé dessus : court, unique, lisible à voix haute (ex. GALA-7K2M-9QXH, sans 0/O ni 1/I). Il permet de retrouver l acheteur sans scanner.
   passName: string; // ex. "Pass Duo V.I.P"
+  passSlug: string; // "duo-vvip" | "duo-vip" | "solo" : type de pass, il décide du design du billet et du bandeau au contrôle
   seats: number;    // 2 pour un Pass Duo, 1 pour un Solo
   holders: string[]; // noms sur le billet : acheteur, puis invité pour un Duo
   status: "PENDING" | "VALID" | "USED" | "CANCELLED";
@@ -95,7 +96,8 @@ verifyTicket(code: string): Promise<ScanResult>
 type ScanResult = {
   status: "VALID" | "USED" | "CANCELLED" | "INVALID";
   ticket?: {                // absent si INVALID (billet inconnu)
-    number: string;         // numéro public
+    number: string;         // code du billet
+    passSlug: string;       // "duo-vvip" | "duo-vip" | "solo" : affiché en grand au contrôle
     passName: string;
     seats: number;
     holders: string[];      // 1 nom (Solo) ou 2 noms (Duo)
@@ -115,8 +117,8 @@ type ScanResult = {
 
 **Vue du personnel de contrôle (STAFF) : billets et personnes, jamais d’argent.** Deux fonctions s’ajoutent à `verifyTicket`, dans le même fichier :
 
-- `getCheckinSummary()` : `{ tickets, ticketsEntered, ticketsRemaining, seats, seatsEntered, seatsRemaining }` (billets payés et valables ; `seats` = personnes, un Duo = 2).
-- `searchTickets(query)` : retrouve des billets par code, nom ou commande quand le QR ne se lit pas. Réponse limitée à `{ number, passName, seats, holders, status, usedAt }`. **Ni e-mail, ni téléphone, ni montant.** Minimum 3 caractères, 12 résultats au plus. L’entrée se valide ensuite avec `verifyTicket(number)`.
+- `getCheckinSummary()` : `{ tickets, ticketsEntered, ticketsRemaining, seats, seatsEntered, seatsRemaining, byPass }` (billets payés et valables ; `seats` = personnes, un Duo = 2). `byPass` répète le même point pour chaque type : `{ slug, name, tickets, entered, remaining, seats, seatsEntered }[]`.
+- `searchTickets(query)` : retrouve des billets par code, nom ou commande quand le QR ne se lit pas. Réponse limitée à `{ number, passSlug, passName, seats, holders, status, usedAt }`. **Ni e-mail, ni téléphone, ni montant.** Minimum 3 caractères, 12 résultats au plus. L’entrée se valide ensuite avec `verifyTicket(number)`.
 
 **Tout ce qui touche à l’argent ou aux coordonnées des clients est réservé aux ADMIN** : montants, paiements, commandes, e-mails et téléphones. Côté serveur, ces champs ne doivent même pas être renvoyés à un STAFF. L’administrateur retrouve un acheteur en tapant le code du billet dans la page Billets (`listTickets`).
 
