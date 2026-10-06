@@ -7,7 +7,7 @@ import { LuArrowLeft, LuArrowRight, LuMail } from "react-icons/lu";
 import { Logo } from "@/components/brand/Logo";
 import { Button } from "@/components/ui/Button";
 import { Field } from "@/components/ui/Field";
-import { DEMO_CODE, DEMO_INVITED, IS_DEMO, requestCode, verifyCode } from "./api";
+import { requestCode, verifyCode } from "./api";
 
 /** Connexion en deux temps : l'e-mail, puis le code reçu. Aucun mot de passe. */
 export function LoginForm() {
@@ -120,15 +120,6 @@ export function LoginForm() {
         </form>
       )}
 
-      {IS_DEMO && (
-        <div className="mt-8 border border-orange/60 p-4 text-sm">
-          <p className="font-semibold uppercase tracking-[0.14em] text-orange">Démonstration</p>
-          <p className="mt-2 text-(--fg)/85">
-            Aucun e-mail n’est envoyé. Adresses invitées : {DEMO_INVITED.map((i) => `${i.email} (${i.role === "ADMIN" ? "administrateur" : "personnel"})`).join(" · ")}. Code :{" "}
-            <span className="font-mono font-semibold">{DEMO_CODE}</span>.
-          </p>
-        </div>
-      )}
 
       <Link href="/" className="mt-8 text-center text-sm text-sable hover:text-ivoire">
         Retour au site

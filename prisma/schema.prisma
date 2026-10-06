@@ -1,5 +1,5 @@
 // Schéma Prisma — Gala TTCT 2026
-// Les modèles métier (User, Event, TicketType, Order, Ticket, ScanLog) sont ajoutés à l'Étape 5.
+// Contrat avec le front : docs/CONTRAT_FRONT_BACK.md
 
 generator client {
   provider = "prisma-client"
@@ -8,4 +8,233 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Catalogue
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+/// Type de pass : "duo-vvip" | "duo-vip" | "solo". Le prix vient d'ici, jamais du front.
+model PassType {
+  slug        String   @id
+  name        String
+  /// Prix en FCFA (entier, pas de décimales).
+  price       Int
+  /// Personnes couvertes par un pass (Duo = 2).
+  seats       Int
+  maxPerOrder Int
+  /// Nombre de pass mis en vente ; null = illimité.
+  capacity    Int?
+  active      Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  orderLines OrderLine[]
+  tickets    Ticket[]
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Commandes et billets
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+enum OrderStatus {
+  PENDING
+  PAID
+  CANCELLED
+}
+
+enum TicketStatus {
+  PENDING
+  VALID
+  USED
+  CANCELLED
+}
+
+model Order {
+  id        String @id @default(cuid())
+  /// Référence publique, imprévisible (elle sert dans /confirmation?ref=…).
+  reference String @unique
+
+  status OrderStatus @default(PENDING)
+
+  buyerFirstName String
+  buyerLastName  String
+  buyerEmail     String
+  /// Normalisé, sans espaces.
+  buyerPhone     String
+
+  /// Total en FCFA, recalculé côté serveur.
+  total    Int
+  currency String @default("FCFA")
+
+  /// Preuve du consentement aux CGV (Code du numérique, art. 341).
+  termsAcceptedAt DateTime
+  termsVersion    String
+
+  /// Seule la référence du prestataire est conservée, jamais de données bancaires.
+  paymentProvider  String?
+  paymentReference String? @unique
+
+  createdAt      DateTime  @default(now())
+  paidAt         DateTime?
+  cancelledAt    DateTime?
+  /// Rappel avant le gala envoyé à l'acheteur (une seule fois).
+  reminderSentAt DateTime?
+  /// Administrateur qui a annulé la commande (traçabilité du remboursement).
+  cancelledBy    String?
+  /// Empreinte (HMAC) de l'adresse IP de l'acheteur : sert seulement à limiter les commandes en rafale.
+  clientIpHash   String?
+
+  lines   OrderLine[]
+  tickets Ticket[]
+
+  @@index([buyerEmail])
+  @@index([status, createdAt])
+  @@index([clientIpHash, createdAt])
+}
+
+model OrderLine {
+  id         String   @id @default(cuid())
+  orderId    String
+  passSlug   String
+  quantity   Int
+  /// Pass Duo : nom complet du second invité, un par pass. Conservés jusqu'au paiement, qui crée les billets.
+  guestNames String[]
+  /// Prix unitaire au moment de la commande (un changement de tarif ne réécrit pas l'historique).
+  unitPrice  Int
+
+  order Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  pass  PassType @relation(fields: [passSlug], references: [slug])
+
+  @@index([orderId])
+}
+
+/// Un billet par pass : un Pass Duo donne un billet valable pour 2 personnes.
+model Ticket {
+  id String @id @default(cuid())
+
+  /// Code du billet imprimé dessus : GALA-XXXX-XXXX (sans 0/O ni 1/I).
+  number  String @unique
+  /// Jeton du QR code : TTCT- + 20 caractères aléatoires. Aucune donnée personnelle dedans.
+  qrToken String @unique
+
+  orderId  String
+  passSlug String
+  seats    Int
+  /// Noms sur le billet : l'acheteur, puis son invité pour un Duo.
+  holders  String[]
+
+  status   TicketStatus @default(PENDING)
+  usedAt   DateTime?
+  /// Membre du contrôle qui a validé l'entrée.
+  usedById String?
+
+  createdAt DateTime @default(now())
+
+  order  Order     @relation(fields: [orderId], references: [id])
+  pass   PassType  @relation(fields: [passSlug], references: [slug])
+  usedBy User?     @relation("TicketUsedBy", fields: [usedById], references: [id])
+  scans  ScanLog[]
+
+  @@index([orderId])
+  @@index([status])
+}
+
+enum ScanResult {
+  VALID
+  USED
+  CANCELLED
+  INVALID
+}
+
+/// Journal de chaque passage au contrôle, y compris les refus.
+model ScanLog {
+  id        String     @id @default(cuid())
+  /// Null si le code scanné ne correspond à aucun billet.
+  ticketId  String?
+  userId    String
+  result    ScanResult
+  /// Contenu brut scanné ou saisi.
+  rawCode   String
+  createdAt DateTime   @default(now())
+
+  ticket Ticket? @relation(fields: [ticketId], references: [id])
+  user   User    @relation(fields: [userId], references: [id])
+
+  @@index([ticketId])
+  @@index([createdAt])
+}
+
+/**
+ * ------------------------------------------------------------------
+ */
+/**
+ * Équipe : connexion par e-mail + code, sans mot de passe
+ */
+/**
+ * ------------------------------------------------------------------
+ */
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+/// Un utilisateur existe seulement s'il a été invité (ou créé à la main pour le premier ADMIN).
+model User {
+  id    String @id @default(cuid())
+  email String @unique
+  role  Role
+
+  invitedById String?
+  invitedBy   User?   @relation("Invitations", fields: [invitedById], references: [id])
+  invited     User[]  @relation("Invitations")
+
+  createdAt   DateTime  @default(now())
+  /// Null tant que la personne ne s'est jamais connectée (statut « En attente »).
+  lastLoginAt DateTime?
+  /// Une invitation révoquée ferme les sessions immédiatement.
+  revokedAt   DateTime?
+
+  sessions    Session[]
+  scans       ScanLog[]
+  usedTickets Ticket[]  @relation("TicketUsedBy")
+}
+
+/// Code à 6 chiffres envoyé par e-mail : à usage unique, court, avec essais limités.
+model LoginCode {
+  id         String    @id @default(cuid())
+  email      String
+  /// Haché, jamais en clair.
+  codeHash   String
+  expiresAt  DateTime
+  attempts   Int       @default(0)
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([email, createdAt])
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  /// Haché : le jeton en clair n'existe que dans le cookie httpOnly.
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }

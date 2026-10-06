@@ -8,7 +8,7 @@ import { Logo } from "@/components/brand/Logo";
 import { Badge } from "@/components/ui/Badge";
 import { Rosace } from "@/components/motifs/Motif";
 import { cn } from "@/lib/cn";
-import { getSession, IS_DEMO, ROLE_LABEL, signOut, type Role, type Session } from "./api";
+import { getSession, ROLE_LABEL, signOut, type Role, type Session } from "./api";
 
 const SessionContext = createContext<Session | null>(null);
 
@@ -129,11 +129,6 @@ export function StaffShell({ children }: { children: ReactNode }) {
         </nav>
       </header>
 
-      {IS_DEMO && (
-        <p className="border-b border-orange/40 bg-brun px-4 py-2 text-center text-xs font-semibold uppercase tracking-[0.14em] text-orange print:hidden">
-          Démonstration : accès et données simulés, rien n’est réel
-        </p>
-      )}
 
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-16 pt-8 sm:px-6">{allowed ? children : <Forbidden />}</main>
     </SessionContext.Provider>

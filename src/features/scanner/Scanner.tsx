@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/Button";
 import { cn } from "@/lib/cn";
 import { CheckinSummaryPanel, TicketSearch } from "./StaffTools";
 import { tierOf } from "@/features/ticketing/tier";
-import { DEMO_CODES, IS_DEMO, verifyTicket, type ScanResult, type ScanStatus } from "./api";
+import { verifyTicket, type ScanResult, type ScanStatus } from "./api";
 
 /** Le texte et l'icône portent toujours le sens : la couleur n'est qu'un renfort. */
 const verdicts: Record<ScanStatus, { title: string; sub: string; Icon: IconType; panel: string; tone: "valide" | "alerte" | "orange" }> = {
@@ -241,25 +241,6 @@ export function Scanner() {
 
           <TicketSearch onValidate={(c) => void check(c)} busy={checking} refreshKey={history.length} />
 
-          {IS_DEMO && (
-            <div className="mt-5">
-              <p className="text-[0.68rem] font-semibold uppercase tracking-[0.2em] text-sable">Codes d’essai</p>
-              <ul className="mt-2 flex flex-wrap gap-2">
-                {DEMO_CODES.map((d) => (
-                  <li key={d.code}>
-                    <button
-                      type="button"
-                      onClick={() => void check(d.code)}
-                      disabled={checking}
-                      className="min-h-10 border border-(--line) px-3 text-xs font-semibold uppercase tracking-[0.1em] hover:border-orange hover:text-orange disabled:opacity-45"
-                    >
-                      {d.label}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
 
           {/* Historique de la session */}
           <section aria-labelledby="history-title" className="mt-8">

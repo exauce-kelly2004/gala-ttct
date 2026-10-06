@@ -21,5 +21,5 @@ export function TicketQr({ token, label }: { token: string; label: string }) {
   }, [token]);
 
   // eslint-disable-next-line @next/next/no-img-element -- data URL générée localement
-  return src ? <img src={src} alt={label} className="size-full object-contain [image-rendering:pixelated]" /> : <span className="sr-only">Chargement du QR code</span>;
+  return src ? <img src={src} alt={label} data-qr="ready" className="size-full object-contain [image-rendering:pixelated]" /> : <span className="sr-only">Chargement du QR code</span>;
 }

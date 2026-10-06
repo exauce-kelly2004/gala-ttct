@@ -9,6 +9,15 @@ const envSchema = z.object({
   NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
   APP_URL: z.url(),
   DATABASE_URL: z.string().startsWith("postgres", "DATABASE_URL doit être une URL PostgreSQL"),
+  /** Clé qui protège les codes de connexion et les jetons de session (32 caractères minimum). */
+  AUTH_SECRET: z.string().min(32, "AUTH_SECRET doit faire au moins 32 caractères"),
+  /** E-mails : sans clé Resend, les messages sont seulement écrits dans le terminal (développement). */
+  RESEND_API_KEY: z.string().optional(),
+  EMAIL_FROM: z.string().default("TTCT Gala <onboarding@resend.dev>"),
+  /** « simulated » : la commande est marquée payée aussitôt (développement uniquement). */
+  PAYMENT_PROVIDER: z.string().default("simulated"),
+  /** Secret de la tâche programmée des rappels (l'hébergeur l'envoie dans l'en-tête Authorization). */
+  CRON_SECRET: z.string().min(16).optional(),
 });
 
 const parsed = envSchema.safeParse(process.env);

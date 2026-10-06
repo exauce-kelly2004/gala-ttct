@@ -4,7 +4,7 @@ import { useEffect, useState, type ReactNode } from "react";
 import { LuSearch } from "react-icons/lu";
 import { Badge } from "@/components/ui/Badge";
 import { formatAmount, formatPhone } from "@/lib/format";
-import { IS_DEMO, listOrders, listTickets, type OrderRow, type OrderStatus, type TicketRow, type TicketStatus } from "./api";
+import { cancelOrder, listOrders, listTickets, type OrderRow, type OrderStatus, type TicketRow, type TicketStatus } from "./api";
 
 const dateFormat = new Intl.DateTimeFormat("fr-FR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "Africa/Porto-Novo" });
 const when = (iso: string) => dateFormat.format(new Date(iso));
@@ -28,6 +28,7 @@ function useFilteredList<T, S extends string>(fetcher: (q: { query: string; stat
   const [status, setStatus] = useState<S | "ALL">("ALL");
   const [rows, setRows] = useState<T[] | null>(null);
   const [error, setError] = useState(false);
+  const [version, setVersion] = useState(0);
 
   useEffect(() => {
     let cancelled = false;
@@ -45,9 +46,9 @@ function useFilteredList<T, S extends string>(fetcher: (q: { query: string; stat
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [query, status, fetcher]);
+  }, [query, status, fetcher, version]);
 
-  return { query, setQuery, status, setStatus, rows, error };
+  return { query, setQuery, status, setStatus, rows, error, refresh: () => setVersion((v) => v + 1) };
 }
 
 function Toolbar<S extends string>({
@@ -74,7 +75,6 @@ function Toolbar<S extends string>({
       <h1 className="font-display text-[clamp(2.4rem,8vw,3.6rem)] font-black uppercase leading-none">{title}</h1>
       <p className="mt-2 text-sable">
         {count === null ? "Chargement…" : `${count} résultat${count > 1 ? "s" : ""}`}
-        {IS_DEMO && " · données de démonstration"}
       </p>
       <div className="mt-6 flex flex-col gap-3 sm:flex-row">
         <label className="relative flex-1">
@@ -128,7 +128,28 @@ function Table({ head, children, empty }: { head: string[]; children: ReactNode;
 }
 
 export function OrdersView() {
-  const { query, setQuery, status, setStatus, rows, error } = useFilteredList<OrderRow, OrderStatus>(listOrders);
+  const { query, setQuery, status, setStatus, rows, error, refresh } = useFilteredList<OrderRow, OrderStatus>(listOrders);
+  const [cancelError, setCancelError] = useState<string | null>(null);
+  const [cancelling, setCancelling] = useState<string | null>(null);
+
+  const cancel = async (o: OrderRow) => {
+    const paid = o.status === "PAID";
+    const ok = window.confirm(
+      `Annuler la commande ${o.reference} de ${o.buyerName} ?\n\nSes billets deviendront invalides.${paid ? ` Pensez à rembourser ${formatAmount(o.total)} FCFA par le même moyen de paiement (sous 30 jours ouvrables) : un e-mail d'annulation est envoyé au client.` : ""}`,
+    );
+    if (!ok) return;
+    setCancelError(null);
+    setCancelling(o.reference);
+    try {
+      await cancelOrder(o.reference);
+      refresh();
+    } catch (err) {
+      const code = err instanceof Error ? err.message : "";
+      setCancelError(code === "TICKETS_USED" ? "Impossible : un billet de cette commande a déjà servi à entrer." : code === "ALREADY_CANCELLED" ? "Cette commande est déjà annulée." : "L’annulation n’a pas pu être faite.");
+    } finally {
+      setCancelling(null);
+    }
+  };
   return (
     <>
       <Toolbar
@@ -151,8 +172,13 @@ export function OrdersView() {
           La liste n’a pas pu être chargée.
         </p>
       )}
+      {cancelError && (
+        <p role="alert" className="mt-6 text-sm font-medium text-alerte">
+          {cancelError}
+        </p>
+      )}
       {rows && (
-        <Table head={["Référence", "Date", "Client", "Commande", "Montant", "Paiement", "Statut"]} empty={rows.length === 0}>
+        <Table head={["Référence", "Date", "Client", "Commande", "Montant", "Paiement", "Statut", "Action"]} empty={rows.length === 0}>
           {rows.map((o) => (
             <tr key={o.reference}>
               <td className="px-4 py-3 font-mono text-[0.85rem]">{o.reference}</td>
@@ -168,6 +194,18 @@ export function OrdersView() {
               <td className="px-4 py-3 font-mono text-[0.8rem] text-sable">{o.paymentReference}</td>
               <td className="px-4 py-3">
                 <Badge tone={orderStatus[o.status].tone}>{orderStatus[o.status].label}</Badge>
+              </td>
+              <td className="px-4 py-3">
+                {o.status !== "CANCELLED" && (
+                  <button
+                    type="button"
+                    onClick={() => void cancel(o)}
+                    disabled={cancelling === o.reference}
+                    className="text-xs font-semibold uppercase tracking-[0.12em] text-alerte underline underline-offset-4 hover:text-ivoire disabled:opacity-45"
+                  >
+                    {cancelling === o.reference ? "Annulation…" : "Annuler"}
+                  </button>
+                )}
               </td>
             </tr>
           ))}

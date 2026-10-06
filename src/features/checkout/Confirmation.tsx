@@ -75,6 +75,8 @@ export function Confirmation({ reference }: { reference: string | null }) {
   const { order } = state;
   const holder = `${order.buyer.firstName} ${order.buyer.lastName}`.trim();
   const pdfTickets = order.tickets.filter((t) => t.pdfUrl);
+  // PDF fabriqué par le serveur (même design que le billet) ; sinon repli sur le PDF fait dans le navigateur
+  const serverPdf = order.tickets.length > 0 && pdfTickets.length === order.tickets.length;
 
   return (
     <>
@@ -89,11 +91,11 @@ export function Confirmation({ reference }: { reference: string | null }) {
           <h1 className="mt-3 font-display text-[clamp(2.8rem,11vw,5rem)] font-black uppercase leading-[0.9]">Réservation confirmée</h1>
           <p className="mt-5 text-(--fg)/85">
             <LuMail className="-mt-0.5 mr-2 inline size-4 text-orange" aria-hidden />
-            Vos billets ont été envoyés à <strong className="font-semibold text-ivoire">{order.buyer.email}</strong>.
+            Vos billets sont ci-dessous, téléchargeables à tout moment. Une confirmation est envoyée à <strong className="font-semibold text-ivoire">{order.buyer.email}</strong>.
           </p>
           {IS_DEMO && (
             <p className="mt-6 border border-orange/60 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-orange">
-              Démonstration : aucun paiement réel, aucun e-mail envoyé
+              Démonstration : aucun paiement réel, aucun montant débité
             </p>
           )}
         </Container>
@@ -131,16 +133,25 @@ export function Confirmation({ reference }: { reference: string | null }) {
                 </p>
 
                 <div className="mt-6 grid gap-3">
-                  <Button onClick={() => void run(async () => downloadTicketsPdf(ticketEls(), `billets-gala-ttct-${order.reference}`))} disabled={downloading} className="w-full">
-                    <LuDownload className="size-4" aria-hidden />
-                    {downloading ? "Préparation…" : order.tickets.length > 1 ? "Télécharger mes billets (PDF)" : "Télécharger mon billet (PDF)"}
-                  </Button>
-                  {pdfTickets.map((t) => (
-                    <Button key={t.number} href={t.pdfUrl!} variant="secondary" className="w-full" download>
+                  {serverPdf ? (
+                    <Button href={`/api/orders/${order.reference}/pdf`} className="w-full" download>
                       <LuDownload className="size-4" aria-hidden />
-                      PDF officiel · {t.number}
+                      {order.tickets.length > 1 ? "Télécharger mes billets (PDF)" : "Télécharger mon billet (PDF)"}
                     </Button>
-                  ))}
+                  ) : (
+                    <Button onClick={() => void run(async () => downloadTicketsPdf(ticketEls(), `billets-gala-ttct-${order.reference}`))} disabled={downloading} className="w-full">
+                      <LuDownload className="size-4" aria-hidden />
+                      {downloading ? "Préparation…" : order.tickets.length > 1 ? "Télécharger mes billets (PDF)" : "Télécharger mon billet (PDF)"}
+                    </Button>
+                  )}
+                  {serverPdf &&
+                    order.tickets.length > 1 &&
+                    pdfTickets.map((t) => (
+                      <Button key={t.number} href={t.pdfUrl!} variant="secondary" className="w-full" download>
+                        <LuDownload className="size-4" aria-hidden />
+                        Billet {t.number} (PDF)
+                      </Button>
+                    ))}
                   <Button onClick={() => window.print()} variant="secondary" className="w-full">
                     <LuPrinter className="size-4" aria-hidden />
                     Imprimer mes billets

@@ -1,21 +1,10 @@
 /**
- * Point de branchement front-end / back-end pour le contrôle des billets.
+ * Contrôle des billets à l'entrée : appels aux routes serveur /api/scan et /api/checkin/*.
  *
- * AUJOURD'HUI : implémentation SIMULÉE (aucun serveur). Elle reconnaît quelques codes de démonstration.
- *
- * À FAIRE PAR LE BACK-END : remplacer le corps de `verifyTicket` par un appel serveur (route API protégée
- * par la connexion du personnel), en gardant la signature. Le serveur doit, en UNE opération atomique :
- * trouver le billet par son jeton, vérifier son statut, le passer à USED s'il était VALID, journaliser le scan,
- * puis répondre. Deux scanners simultanés ne doivent jamais valider le même billet.
+ * Le serveur valide ET marque le billet comme utilisé en une seule opération atomique (voir src/server/checkin.ts) :
+ * deux scanners simultanés ne peuvent jamais valider le même billet. Ces routes exigent une session ADMIN ou STAFF.
  * Contrat détaillé : docs/CONTRAT_FRONT_BACK.md (section « Contrôle à l'entrée »).
  */
-
-import { passes } from "@/config/passes";
-import { allDemoTickets, findBaseDemoTicket, matchesQuery } from "@/features/dashboard/api";
-import { findDemoTicket, markDemoUsed } from "./demo-registry";
-
-/** Indique à l'interface qu'elle tourne sur des données simulées (bandeau « démonstration »). */
-export const IS_DEMO = true;
 
 export type ScanStatus = "VALID" | "USED" | "CANCELLED" | "INVALID";
 
@@ -43,89 +32,18 @@ export type ScanResult = {
   scannedAt: string;
 };
 
-/** Codes de démonstration, à saisir ou à encoder dans un QR pour essayer l'écran. */
-export const DEMO_CODES = [
-  { code: "DEMO-SOLO", label: "Solo valide" },
-  { code: "DEMO-DUO", label: "Duo valide" },
-  { code: "DEMO-USED", label: "Déjà utilisé" },
-  { code: "DEMO-CANCELLED", label: "Annulé" },
-  { code: "DEMO-INCONNU", label: "Inconnu" },
-] as const;
-
-const demoTickets: Record<string, { status: "VALID" | "USED" | "CANCELLED"; ticket: ScanTicket }> = {
-  "DEMO-SOLO": {
-    status: "VALID",
-    ticket: { number: "EXEMPLE-SOLO-1", passSlug: "solo", passName: "Pass Solo", seats: 1, holders: ["Awa Sossou"], orderReference: "DEMO-0001", paid: true },
-  },
-  "DEMO-DUO": {
-    status: "VALID",
-    ticket: { number: "EXEMPLE-DUO-VIP-1", passSlug: "duo-vip", passName: "Pass Duo V.I.P", seats: 2, holders: ["Koffi Adjovi", "Mariam Adjovi"], orderReference: "DEMO-0002", paid: true },
-  },
-  "DEMO-USED": {
-    status: "USED",
-    ticket: {
-      number: "EXEMPLE-DUO-VVIP-1",
-      passSlug: "duo-vvip",
-      passName: "Pass Duo V.V.I.P",
-      seats: 2,
-      holders: ["Jean Tossou", "Agnès Tossou"],
-      orderReference: "DEMO-0003",
-      paid: true,
-      usedAt: "2026-12-19T20:42:00+01:00",
-    },
-  },
-  "DEMO-CANCELLED": {
-    status: "CANCELLED",
-    ticket: { number: "EXEMPLE-SOLO-2", passSlug: "solo", passName: "Pass Solo", seats: 1, holders: ["Paul Dossou"], orderReference: "DEMO-0004", paid: true },
-  },
-};
-
-// Billets « consommés » pendant la session de démonstration : un second scan doit être refusé
-const consumed = new Map<string, string>();
-
-const pause = (ms: number) => new Promise((r) => setTimeout(r, ms));
+async function call<T>(url: string, init?: RequestInit): Promise<T> {
+  const res = await fetch(url, { ...init, headers: init?.body ? { "Content-Type": "application/json" } : undefined, cache: "no-store" });
+  if (!res.ok) throw new Error(`REQUEST_FAILED_${res.status}`);
+  return (await res.json()) as T;
+}
 
 /**
  * Vérifie un billet à partir du contenu de son QR code OU du code court imprimé sur le billet (saisi à la main).
- * Réel : le serveur valide ET marque le billet comme utilisé dans la même opération.
+ * Lève une exception en cas d'erreur réseau : le billet n'est alors pas considéré comme validé.
  */
-export async function verifyTicket(code: string): Promise<ScanResult> {
-  await pause(450);
-  const scannedAt = new Date().toISOString();
-  const trimmed = code.trim();
-
-  // 1. Billets achetés dans ce navigateur pendant la démonstration (par jeton du QR ou code court)
-  const bought = findDemoTicket(trimmed);
-  if (bought) {
-    const { key, entry } = bought;
-    if (entry.status === "VALID") {
-      markDemoUsed(key, entry.ticket, scannedAt);
-      return { status: "VALID", ticket: entry.ticket, scannedAt };
-    }
-    return { status: entry.status, ticket: entry.ticket, scannedAt };
-  }
-
-  // 2. Billets du jeu de démonstration de base, par code court
-  const base = findBaseDemoTicket(trimmed);
-  if (base) {
-    const ticket: ScanTicket = { number: base.number, passSlug: base.passSlug, passName: base.passName, seats: base.seats, holders: base.holders, orderReference: base.orderReference, paid: base.status !== "PENDING" };
-    if (base.status === "VALID") {
-      markDemoUsed(base.number, ticket, scannedAt);
-      return { status: "VALID", ticket, scannedAt };
-    }
-    return { status: base.status === "CANCELLED" ? "CANCELLED" : "INVALID", ticket, scannedAt };
-  }
-
-  // 3. Codes d'essai fixes
-  const found = demoTickets[trimmed.toUpperCase()];
-  if (!found) return { status: "INVALID", scannedAt };
-  if (found.status === "VALID") {
-    const firstPass = consumed.get(trimmed.toUpperCase());
-    if (firstPass) return { status: "USED", ticket: { ...found.ticket, usedAt: firstPass }, scannedAt };
-    consumed.set(trimmed.toUpperCase(), scannedAt);
-    return { status: "VALID", ticket: found.ticket, scannedAt };
-  }
-  return { status: found.status, ticket: found.ticket, scannedAt };
+export function verifyTicket(code: string): Promise<ScanResult> {
+  return call<ScanResult>("/api/scan", { method: "POST", body: JSON.stringify({ code }) });
 }
 
 /* ---------------------------------------------------------------------- */
@@ -145,28 +63,9 @@ export type CheckinSummary = {
   byPass: { slug: string; name: string; tickets: number; entered: number; remaining: number; seats: number; seatsEntered: number }[];
 };
 
-/**
- * « Point des billets » de l'entrée. Accessible au rôle STAFF : le serveur ne doit renvoyer ici que des comptages
- * de billets et de personnes, aucun montant, aucune donnée de paiement.
- */
-export async function getCheckinSummary(): Promise<CheckinSummary> {
-  await pause(250);
-  const admissible = allDemoTickets().filter((t) => t.status === "VALID" || t.status === "USED");
-  const entered = admissible.filter((t) => t.status === "USED");
-  const sum = (list: { seats: number }[]) => list.reduce((s, t) => s + t.seats, 0);
-  return {
-    tickets: admissible.length,
-    ticketsEntered: entered.length,
-    ticketsRemaining: admissible.length - entered.length,
-    seats: sum(admissible),
-    seatsEntered: sum(entered),
-    seatsRemaining: sum(admissible) - sum(entered),
-    byPass: passes.map((p) => {
-      const mine = admissible.filter((t) => t.passSlug === p.slug);
-      const inside = mine.filter((t) => t.status === "USED");
-      return { slug: p.slug, name: p.name, tickets: mine.length, entered: inside.length, remaining: mine.length - inside.length, seats: sum(mine), seatsEntered: sum(inside) };
-    }),
-  };
+/** « Point des billets » de l'entrée : comptages de billets et de personnes uniquement, aucun montant. */
+export function getCheckinSummary(): Promise<CheckinSummary> {
+  return call<CheckinSummary>("/api/checkin/summary");
 }
 
 export type TicketLookup = {
@@ -181,14 +80,9 @@ export type TicketLookup = {
 
 /**
  * Retrouve des billets par code, nom ou numéro de commande, quand le QR code ne se scanne pas.
- * Accessible au rôle STAFF : ni e-mail, ni téléphone, ni montant dans la réponse. L'entrée se valide ensuite
- * avec `verifyTicket(number)`. Réel : au moins 3 caractères exigés, résultats limités.
+ * Ni e-mail, ni téléphone, ni montant dans la réponse. L'entrée se valide ensuite avec `verifyTicket(number)`.
  */
 export async function searchTickets(query: string): Promise<TicketLookup[]> {
-  await pause(300);
   if (query.trim().length < 3) return [];
-  return allDemoTickets()
-    .filter((t) => matchesQuery(query, t.number, t.orderReference, ...t.holders))
-    .slice(0, 12)
-    .map((t) => ({ number: t.number, passSlug: t.passSlug, passName: t.passName, seats: t.seats, holders: t.holders, status: t.status, usedAt: t.usedAt }));
+  return call<TicketLookup[]>(`/api/checkin/search?q=${encodeURIComponent(query.trim())}`);
 }

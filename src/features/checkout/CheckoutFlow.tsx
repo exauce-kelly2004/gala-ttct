@@ -160,9 +160,11 @@ export function CheckoutFlow({ initialCart }: { initialCart: Cart }) {
       // Prestataire avec page de paiement hébergée : on y redirige ; sinon, confirmation directe
       if (paymentUrl) window.location.assign(paymentUrl);
       else router.push(`/confirmation?ref=${encodeURIComponent(reference)}`);
-    } catch {
+    } catch (err) {
       setPaying(false);
-      setPayError("Le paiement n’a pas pu être lancé. Vérifiez votre connexion et réessayez.");
+      // Le serveur explique les refus utiles à l'acheteur (pass épuisé, trop de commandes) ; sinon message général
+      const reason = err instanceof Error && err.message !== "ORDER_FAILED" ? err.message : null;
+      setPayError(reason ?? "Le paiement n’a pas pu être lancé. Vérifiez votre connexion et réessayez.");
     }
   };
 
