@@ -1,7 +1,7 @@
 import "server-only";
 import { event } from "@/config/event";
 import { db } from "@/lib/db";
-import { env } from "@/lib/env";
+import { reminderEmail } from "./emails";
 import { sendMail } from "./mail";
 
 /** Le rappel part quand le gala est dans 3 jours ou moins. */
@@ -37,24 +37,17 @@ export async function sendDueReminders(now = new Date()): Promise<{ sent: number
       continue;
     }
     const where = event.venue ?? event.city;
-    const tickets = order.tickets.map((t) => `- ${t.pass.name} : ${t.number} (${t.holders.join(" et ")})`).join("\n");
     try {
       await sendMail({
         to: order.buyerEmail,
         subject: `Rappel : le Gala TTCT, ${event.dateLabel}`,
-        text: [
-          `Bonjour ${order.buyerFirstName},`,
-          "",
-          `Le gala approche : ${dateTime.format(eventDate)}${event.startTime ? ` à ${event.startTime}` : ""}, ${where}.`,
-          "",
-          "Vos billets :",
-          tickets,
-          "",
-          "Présentez le QR code à l'entrée, sur téléphone ou imprimé. S'il ne se lit pas, donnez le code du billet à l'accueil.",
-          `Retrouver vos billets : ${env.APP_URL}/confirmation?ref=${order.reference}`,
-          "",
-          `${event.name} · ${event.organizer}`,
-        ].join("\n"),
+        ...reminderEmail({
+          firstName: order.buyerFirstName,
+          reference: order.reference,
+          dateText: dateTime.format(eventDate),
+          place: where,
+          tickets: order.tickets.map((t) => ({ passName: t.pass.name, number: t.number, holders: t.holders })),
+        }),
       });
       await db.order.update({ where: { id: order.id }, data: { reminderSentAt: now } });
       sent++;

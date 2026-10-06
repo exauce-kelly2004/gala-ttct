@@ -4,6 +4,7 @@ import { cookies } from "next/headers";
 import type { Role } from "@/generated/prisma/enums";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
+import { loginCodeEmail } from "./emails";
 import { sendMail } from "./mail";
 
 /**
@@ -47,11 +48,7 @@ export async function requestLoginCode(rawEmail: string): Promise<void> {
     data: { email, codeHash: hmac(`${email}:${code}`), expiresAt: new Date(Date.now() + CODE_MINUTES * 60_000) },
   });
 
-  await sendMail({
-    to: email,
-    subject: `Votre code de connexion TTCT Gala : ${code}`,
-    text: `Votre code de connexion : ${code}\n\nIl est valable ${CODE_MINUTES} minutes et ne s'utilise qu'une fois.\nSi vous n'êtes pas à l'origine de cette demande, ignorez ce message.`,
-  });
+  await sendMail({ to: email, subject: `Votre code de connexion TTCT Gala : ${code}`, ...loginCodeEmail(code, CODE_MINUTES) });
 }
 
 /** Vérifie le code ; en cas de succès ouvre la session (cookie). Renvoie null si le code est faux, expiré ou épuisé. */

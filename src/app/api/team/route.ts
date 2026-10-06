@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { db } from "@/lib/db";
-import { env } from "@/lib/env";
 import { normalizeEmail, requireRole } from "@/server/auth";
+import { invitationEmail } from "@/server/emails";
 import { sendMail } from "@/server/mail";
 
 type InvitationRow = { email: string; role: "ADMIN" | "STAFF"; invitedAt: string; status: "PENDING" | "ACTIVE" };
@@ -41,11 +41,7 @@ export async function POST(request: Request) {
 
   const roleLabel = parsed.data.role === "ADMIN" ? "administrateur" : "personnel de contrôle";
   try {
-    await sendMail({
-      to: email,
-      subject: "Invitation à l'espace TTCT Gala 2026",
-      text: `Vous avez été invité(e) comme ${roleLabel} sur l'espace réservé du Gala TTCT 2026.\n\nConnectez-vous avec cette adresse e-mail : ${env.APP_URL}/espace/connexion\nUn code de connexion vous sera envoyé à chaque fois, sans mot de passe.`,
-    });
+    await sendMail({ to: email, subject: "Invitation à l'espace TTCT Gala 2026", ...invitationEmail(roleLabel) });
   } catch (error) {
     // L'invitation est enregistrée même si l'e-mail n'est pas parti : l'invité peut quand même se connecter.
     console.error("[team] e-mail d'invitation non envoyé", error);

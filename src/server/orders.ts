@@ -8,6 +8,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { db } from "@/lib/db";
 import { env } from "@/lib/env";
 import { newOrderReference, newQrToken, newTicketNumber } from "./codes";
+import { cancellationEmail, orderConfirmationEmail } from "./emails";
 import { sendMail } from "./mail";
 import { renderTicketsPdf } from "./pdf";
 import { startPayment } from "./payment";
@@ -197,35 +198,28 @@ export async function getOrder(reference: string): Promise<Order | null> {
 }
 
 const dateTime = new Intl.DateTimeFormat("fr-FR", { dateStyle: "long", timeStyle: "short", timeZone: "Africa/Porto-Novo" });
-const amount = (n: number) => new Intl.NumberFormat("fr-FR").format(n).replace(/[  ]/g, " ");
 
 /** Accusé de réception : récapitulatif, date et heure, codes des billets (Code du numérique, art. 344). */
 async function sendOrderConfirmation(reference: string) {
   const order = await getOrder(reference);
   if (!order) return;
-  const lines = order.lines.map((l) => `- ${l.quantity} × ${l.name} : ${amount(l.price * l.quantity)} FCFA`).join("\n");
-  const tickets = order.tickets.map((t) => `- ${t.passName} : ${t.number} (${t.holders.join(" et ")})`).join("\n");
   // Billets en pièce jointe (PDF identique au billet du site) ; si la fabrication échoue, l'e-mail part quand même
   const pdf = await renderTicketsPdf(env.APP_URL, reference).catch((error) => {
     console.error("[orders] PDF non joint", error);
     return null;
   });
+  const email = orderConfirmationEmail({
+    reference: order.reference,
+    firstName: order.buyer.firstName,
+    date: dateTime.format(new Date(order.createdAt)),
+    total: order.total,
+    lines: order.lines.map((l) => ({ quantity: l.quantity, name: l.name, price: l.price })),
+    tickets: order.tickets.map((t) => ({ passName: t.passName, number: t.number, holders: t.holders })),
+  });
   await sendMail({
     to: order.buyer.email,
     subject: `Vos billets du Gala TTCT 2026 (${order.reference})`,
-    text: [
-      `Bonjour ${order.buyer.firstName},`,
-      "",
-      `Votre commande ${order.reference} du ${dateTime.format(new Date(order.createdAt))} est confirmée.`,
-      "",
-      lines,
-      `Total payé : ${amount(order.total)} FCFA`,
-      "",
-      "Vos billets (le code se donne à l'entrée si le QR code ne se lit pas) :",
-      tickets,
-      "",
-      `Télécharger vos billets : ${env.APP_URL}/confirmation?ref=${order.reference}`,
-    ].join("\n"),
+    ...email,
     attachments: pdf ? [{ filename: `billets-gala-ttct-${order.reference}.pdf`, content: Buffer.from(pdf) }] : undefined,
   });
 }
@@ -257,16 +251,5 @@ export async function cancelOrder(reference: string, cancelledBy: string): Promi
 async function sendCancellationNotice(reference: string) {
   const order = await getOrder(reference);
   if (!order) return;
-  await sendMail({
-    to: order.buyer.email,
-    subject: `Annulation de votre commande ${order.reference}`,
-    text: [
-      `Bonjour ${order.buyer.firstName},`,
-      "",
-      `Votre commande ${order.reference} a été annulée. Ses billets ne sont plus valables.`,
-      `Le montant de ${amount(order.total)} FCFA vous sera remboursé par le même moyen de paiement, sous 30 jours ouvrables.`,
-      "",
-      "Pour toute question, répondez à ce message ou contactez l'organisation.",
-    ].join("\n"),
-  });
+  await sendMail({ to: order.buyer.email, subject: `Annulation de votre commande ${order.reference}`, ...cancellationEmail({ firstName: order.buyer.firstName, reference: order.reference, total: order.total }) });
 }
