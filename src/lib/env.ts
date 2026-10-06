@@ -14,6 +14,8 @@ const envSchema = z.object({
   /** E-mails : sans clé Resend, les messages sont seulement écrits dans le terminal (développement). */
   RESEND_API_KEY: z.string().optional(),
   EMAIL_FROM: z.string().default("TTCT Gala <onboarding@resend.dev>"),
+  /** Adresse qui reçoit les réponses des clients (l'expéditeur n'a pas de boîte de réception). Facultative. */
+  EMAIL_REPLY_TO: z.string().optional(),
   /** « simulated » : la commande est marquée payée aussitôt (développement uniquement). */
   PAYMENT_PROVIDER: z.string().default("simulated"),
   /** Secret de la tâche programmée des rappels (l'hébergeur l'envoie dans l'en-tête Authorization). */

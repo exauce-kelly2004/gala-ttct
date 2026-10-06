@@ -19,7 +19,7 @@ export async function sendMail({ to, subject, text, html, attachments }: Mail): 
   const res = await fetch("https://api.resend.com/emails", {
     method: "POST",
     headers: { Authorization: `Bearer ${env.RESEND_API_KEY}`, "Content-Type": "application/json" },
-    body: JSON.stringify({ from: env.EMAIL_FROM, to, subject, text, html, attachments: attachments?.map((a) => ({ filename: a.filename, content: a.content.toString("base64") })) }),
+    body: JSON.stringify({ from: env.EMAIL_FROM, reply_to: env.EMAIL_REPLY_TO || undefined, to, subject, text, html, attachments: attachments?.map((a) => ({ filename: a.filename, content: a.content.toString("base64") })) }),
   });
   if (!res.ok) throw new Error(`Resend a refusé l'envoi (${res.status}) : ${await res.text()}`);
 }
