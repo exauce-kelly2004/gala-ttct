@@ -18,7 +18,11 @@
     "db:demo": "tsx --conditions=react-server scripts/demo.ts create",
     "db:demo:reset": "tsx --conditions=react-server scripts/demo.ts reset",
     "db:demo:pdf": "tsx --conditions=react-server scripts/demo.ts pdf",
-    "db:demo:remove": "tsx --conditions=react-server scripts/demo.ts remove"
+    "db:demo:remove": "tsx --conditions=react-server scripts/demo.ts remove",
+    "db:test15": "tsx --conditions=react-server scripts/demo.ts create test15",
+    "db:test15:reset": "tsx --conditions=react-server scripts/demo.ts reset test15",
+    "db:test15:pdf": "tsx --conditions=react-server scripts/demo.ts pdf test15",
+    "db:test15:remove": "tsx --conditions=react-server scripts/demo.ts remove test15"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",
