@@ -14,7 +14,11 @@
     "db:migrate": "prisma migrate dev",
     "db:studio": "prisma studio",
     "postinstall": "prisma generate",
-    "db:seed": "tsx scripts/seed.ts"
+    "db:seed": "tsx scripts/seed.ts",
+    "db:demo": "tsx --conditions=react-server scripts/demo.ts create",
+    "db:demo:reset": "tsx --conditions=react-server scripts/demo.ts reset",
+    "db:demo:pdf": "tsx --conditions=react-server scripts/demo.ts pdf",
+    "db:demo:remove": "tsx --conditions=react-server scripts/demo.ts remove"
   },
   "dependencies": {
     "@prisma/adapter-pg": "^7.10.0",

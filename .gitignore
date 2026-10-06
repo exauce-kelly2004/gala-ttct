@@ -47,3 +47,6 @@ next-env.d.ts
 
 # référence visuelle d’un tiers (droits d’auteur) : conservée en local, non publiée
 /docs/Identidade visual Afro I Africa I Afrobeats.jpg
+
+# billets de démonstration (PDF avec de vrais jetons)
+/demo
