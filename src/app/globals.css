@@ -26,6 +26,7 @@
   /* Typographie validée : option A */
   --font-display: var(--font-londrina), "Londrina Solid", Impact, sans-serif;
   --font-sans: var(--font-work-sans), "Work Sans", system-ui, sans-serif;
+  --font-mono: var(--font-jetbrains-mono), ui-monospace, "Cascadia Mono", Consolas, monospace;
 
   --ease-gala: cubic-bezier(0.22, 1, 0.36, 1);
   --animate-rise: rise 0.9s var(--ease-gala) both;

@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Londrina_Solid, Work_Sans } from "next/font/google";
+import { JetBrains_Mono, Londrina_Solid, Work_Sans } from "next/font/google";
 import { siteUrl } from "@/config/site";
 import "./globals.css";
 
@@ -14,6 +14,14 @@ const londrina = Londrina_Solid({
 const workSans = Work_Sans({
   variable: "--font-work-sans",
   subsets: ["latin"],
+  display: "swap",
+});
+
+// Chasse fixe pour les codes de billet (GALA-XXXX-XXXX) : embarquée, car un serveur sans polices système (PDF) la remplacerait par la police normale.
+const mono = JetBrains_Mono({
+  variable: "--font-jetbrains-mono",
+  subsets: ["latin"],
+  weight: ["400", "600"],
   display: "swap",
 });
 
@@ -38,7 +46,7 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="fr" className={`${londrina.variable} ${workSans.variable} h-full antialiased`}>
+    <html lang="fr" className={`${londrina.variable} ${workSans.variable} ${mono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
